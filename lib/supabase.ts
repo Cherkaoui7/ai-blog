@@ -1,11 +1,25 @@
 import { createClient } from '@supabase/supabase-js';
 
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const service = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+function getSupabase() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+  return createClient(url, anon);
+}
 
-// Browser client — for reading posts in the frontend
-export const supabase = createClient(url, anon);
+function getSupabaseAdmin() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const service = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+  return createClient(url, service);
+}
 
-// Server client — for agents writing/updating posts (full access)
-export const supabaseAdmin = createClient(url, service);
+export const supabase = new Proxy({} as ReturnType<typeof getSupabase>, {
+  get(_, prop) {
+    return getSupabase()[prop as keyof ReturnType<typeof getSupabase>];
+  }
+});
+
+export const supabaseAdmin = new Proxy({} as ReturnType<typeof getSupabaseAdmin>, {
+  get(_, prop) {
+    return getSupabaseAdmin()[prop as keyof ReturnType<typeof getSupabaseAdmin>];
+  }
+});
