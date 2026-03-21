@@ -175,7 +175,8 @@ ${articleBody}`;
           if (ctx) {
             ctx.drawImage(imgEl, 0, 0, 1200, 630);
             const base64 = canvas.toDataURL('image/jpeg', 0.9).split(',')[1];
-            await serverPost('/api/agents/save-image', { slug, base64 });
+            const saveResult = await serverPost('/api/agents/save-image', { slug, base64 });
+            const finalImagePath = saveResult.imagePath || `/images/${slug}.svg`;
             imageSource = 'gpt-image';
           }
         }

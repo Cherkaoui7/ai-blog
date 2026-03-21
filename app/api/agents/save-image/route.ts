@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
+import { supabaseAdmin } from '@/lib/supabase';
 
 export const maxDuration = 30;
 
@@ -11,15 +10,26 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: false, error: 'slug and base64 required' }, { status: 400 });
     }
 
-    const dir = path.join(process.cwd(), 'public', 'images');
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-
     const buffer = Buffer.from(base64, 'base64');
-    const filePath = path.join(dir, `${slug}.jpg`);
-    fs.writeFileSync(filePath, buffer);
 
-    console.log(`[Save Image] Saved /images/${slug}.jpg`);
-    return NextResponse.json({ ok: true, imagePath: `/images/${slug}.jpg` });
+    // Upload to Supabase Storage bucket "images"
+    const { error } = await supabaseAdmin.storage
+      .from('images')
+      .upload(`${slug}.jpg`, buffer, {
+        contentType: 'image/jpeg',
+        upsert: true,
+      });
+
+    if (error) throw new Error(error.message);
+
+    // Get public URL
+    const { data } = supabaseAdmin.storage
+      .from('images')
+      .getPublicUrl(`${slug}.jpg`);
+
+    console.log(`[Save Image] Uploaded to Supabase: ${data.publicUrl}`);
+    return NextResponse.json({ ok: true, imagePath: data.publicUrl });
+
   } catch (err: any) {
     console.error('[Save Image] Error:', err.message);
     return NextResponse.json({ ok: false, error: err.message }, { status: 500 });
