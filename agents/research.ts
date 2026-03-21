@@ -12,9 +12,26 @@ export type ResearchTopic = {
 };
 async function askGemini(prompt: string): Promise<string> {
   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-lite' });
-  const result = await model.generateContent(prompt);
-  return result.response.text();
+  
+  const models = [
+    'gemini-2.0-flash',
+    'gemini-2.0-flash-lite', 
+    'gemini-1.5-flash',
+    'gemini-pro',
+  ];
+
+  for (const modelName of models) {
+    try {
+      const model = genAI.getGenerativeModel({ model: modelName });
+      const result = await model.generateContent(prompt);
+      console.log(`[Research] Using model: ${modelName}`);
+      return result.response.text();
+    } catch (err: any) {
+      console.warn(`[Research] Model ${modelName} failed:`, err.message);
+      continue;
+    }
+  }
+  throw new Error('All Gemini models failed — check your API key');
 }
 
 // ── 1. Scrape Google Trends RSS ──────────────────────────────
