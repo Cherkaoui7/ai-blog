@@ -3,7 +3,7 @@ import Link from 'next/link';
 import './globals.css';
 import { Geist } from "next/font/google";
 import { cn } from "@/lib/utils";
-
+import { Analytics } from "@vercel/analytics/next";
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 export const metadata: Metadata = {
@@ -51,6 +51,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </div>
           </div>
         </footer>
+        <Analytics />
       </body>
     </html>
   );
