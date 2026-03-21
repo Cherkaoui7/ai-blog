@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { runResearchAgent } from '@/agents/research';
 import { supabaseAdmin } from '@/lib/supabase';
 
-export const maxDuration = 60;
+export const maxDuration = 60; // ← add this
 
 export async function POST(req: NextRequest) {
   try {
@@ -13,7 +13,6 @@ export async function POST(req: NextRequest) {
 
     const topics = await runResearchAgent(niche);
 
-    // Save to Supabase using admin client
     const { error } = await supabaseAdmin.from('research_topics').insert(
       topics.map(t => ({
         niche,
