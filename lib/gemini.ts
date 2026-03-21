@@ -5,8 +5,8 @@ if (!apiKey) throw new Error('GEMINI_API_KEY is not set in .env.local');
 
 const genAI = new GoogleGenerativeAI(apiKey);
 
-export const flashModel = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-export const proModel = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
+export const flashModel = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+export const proModel = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
 export async function askGemini(prompt: string, pro = false): Promise<string> {
   const model = pro ? proModel : flashModel;
