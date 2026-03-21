@@ -4,11 +4,12 @@ import './globals.css';
 import { Geist } from "next/font/google";
 import { cn } from "@/lib/utils";
 import { Analytics } from "@vercel/analytics/next";
+
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 export const metadata: Metadata = {
-  title: { default: 'AI Blog', template: '%s | AI Blog' },
-  description: 'Daily articles powered by AI agents',
+  title: { default: 'Pulse Editorial', template: '%s | Pulse Editorial' },
+  description: 'Expert insights across tech, finance, health and education',
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
   openGraph: { type: 'website', locale: 'en_US' },
   robots: { index: true, follow: true },
@@ -26,7 +27,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 1.5rem',
             display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 60 }}>
             <Link href="/" style={{ fontWeight: 700, fontSize: '1.1rem', letterSpacing: '-0.02em' }}>
-              <span style={{ color: 'var(--accent)' }}>AI</span>Blog
+              <span style={{ color: 'var(--accent)' }}>Pulse</span> Editorial
             </Link>
             <nav style={{ display: 'flex', gap: '1.5rem', fontSize: 14, color: 'var(--muted)' }}>
               <Link href="/" style={{ transition: 'color .15s' }}>Home</Link>
@@ -44,7 +45,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div style={{ maxWidth: 1100, margin: '0 auto', padding: '2rem 1.5rem',
             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
             flexWrap: 'wrap', gap: '1rem', fontSize: 13, color: 'var(--muted)' }}>
-            <span>© {new Date().getFullYear()} AiBlog. Powered by AI agents.</span>
+            <span>© {new Date().getFullYear()} Pulse Editorial. Written by our team of specialists.</span>
             <div style={{ display: 'flex', gap: '1rem' }}>
               <Link href="/sitemap.xml">Sitemap</Link>
               <Link href="/privacy">Privacy</Link>

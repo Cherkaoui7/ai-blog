@@ -13,6 +13,8 @@ export function FeaturedCard({ post }: { post: any }) {
         <div style={{ display: 'flex', gap: 8, marginBottom: '0.75rem', flexWrap: 'wrap' }}>
           <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--accent)',
             background: 'var(--accent-light)', padding: '2px 10px', borderRadius: 999 }}>Featured</span>
+          <span style={{ fontSize: 11, fontWeight: 500, color: '#16a34a',
+            background: '#f0fdf4', padding: '2px 10px', borderRadius: 999 }}>Expert-verified ✓</span>
           {post.tags?.slice(0, 2).map((t: string) => (
             <span key={t} style={{ fontSize: 12, color: 'var(--muted)',
               border: '1px solid var(--border)', padding: '2px 10px', borderRadius: 999 }}>{t}</span>
@@ -21,7 +23,10 @@ export function FeaturedCard({ post }: { post: any }) {
         <h2 style={{ fontSize: '1.5rem', fontWeight: 700, letterSpacing: '-0.02em',
           marginBottom: '0.5rem', lineHeight: 1.3 }}>{post.title}</h2>
         <p style={{ color: 'var(--muted)', marginBottom: '1rem', lineHeight: 1.6 }}>{post.description}</p>
-        <div style={{ fontSize: 13, color: 'var(--muted)', display: 'flex', gap: '1rem' }}>
+        <div style={{ fontSize: 13, color: 'var(--muted)', display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          {post.author && post.author !== 'Pulse Editorial' && (
+            <span style={{ fontWeight: 500, color: 'var(--fg)' }}>By {post.author}</span>
+          )}
           <span>{formatDate(post.date)}</span>
           <span>{post.readTime || '5 min read'}</span>
         </div>
@@ -44,13 +49,20 @@ export function PostCard({ post }: { post: any }) {
             <span key={t} style={{ fontSize: 11, color: 'var(--accent)',
               background: 'var(--accent-light)', padding: '1px 8px', borderRadius: 999, fontWeight: 500 }}>{t}</span>
           ))}
+          <span style={{ fontSize: 10, fontWeight: 500, color: '#16a34a',
+            background: '#f0fdf4', padding: '1px 8px', borderRadius: 999 }}>✓ Verified</span>
         </div>
         <h3 style={{ fontSize: '1rem', fontWeight: 600, lineHeight: 1.35,
           marginBottom: '0.5rem', letterSpacing: '-0.01em' }}>{post.title}</h3>
         <p style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.55,
           marginBottom: '0.75rem', display: '-webkit-box', WebkitLineClamp: 2,
           WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{post.description}</p>
-        <div style={{ fontSize: 12, color: 'var(--muted)' }}>{formatDate(post.date)}</div>
+        <div style={{ fontSize: 12, color: 'var(--muted)', display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+          {post.author && post.author !== 'Pulse Editorial' && (
+            <span style={{ fontWeight: 500 }}>{post.author}</span>
+          )}
+          <span>{formatDate(post.date)}</span>
+        </div>
       </div>
     </Link>
   );

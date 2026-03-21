@@ -65,7 +65,7 @@ export default function AdminPage() {
         transition: 'width 0.2s',
       }}>
         <div style={{ padding: '24px 20px 16px', borderBottom: '1px solid #e5e0d8' }}>
-          <div style={{ fontSize: 11, letterSpacing: '0.1em', color: '#9ca3af', textTransform: 'uppercase', marginBottom: 4 }}>AI Blog</div>
+          <div style={{ fontSize: 11, letterSpacing: '0.1em', color: '#9ca3af', textTransform: 'uppercase', marginBottom: 4 }}>Pulse Editorial</div>
           <h1 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: '#1a1a1a' }}>Content Manager</h1>
           <div style={{ marginTop: 8, fontSize: 13, color: '#6b7280' }}>
             {loading ? 'Loading...' : `${posts.length} article${posts.length !== 1 ? 's' : ''} generated`}

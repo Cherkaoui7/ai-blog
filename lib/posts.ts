@@ -13,6 +13,10 @@ export type Post = {
   keyword: string;
   image: string;
   readTime: string;
+  author: string;
+  authorTitle: string;
+  niche: string;
+  lastUpdated: string;
   content: string;
 };
 
@@ -36,6 +40,10 @@ export async function getAllPosts(): Promise<Post[]> {
       keyword: data.keyword || '',
       image: data.image || '',
       readTime: data.readTime || '5 min read',
+      author: data.author || 'Pulse Editorial',
+      authorTitle: data.authorTitle || '',
+      niche: data.niche || '',
+      lastUpdated: data.lastUpdated || data.date || new Date().toISOString(),
       content,
     };
   });
@@ -61,6 +69,10 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
         keyword: data.keyword || '',
         image: data.image || '',
         readTime: data.readTime || '5 min read',
+        author: data.author || 'Pulse Editorial',
+        authorTitle: data.authorTitle || '',
+        niche: data.niche || '',
+        lastUpdated: data.lastUpdated || data.date || new Date().toISOString(),
         content,
       };
     }

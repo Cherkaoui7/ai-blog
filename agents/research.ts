@@ -1,12 +1,14 @@
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 import { askGemini } from '@/lib/gemini';
+import { detectNiche } from '@/lib/authors';
 
 export type ResearchTopic = {
   topic: string;
   reason: string;
   estimatedSearchVolume: 'high' | 'medium' | 'low';
   contentAngle: string;
+  niche: string;
 };
 
 // ── 1. Scrape Google Trends RSS ──────────────────────────────
@@ -103,13 +105,17 @@ Respond ONLY with valid JSON array, no markdown, no explanation:
 const cleaned = raw.replace(/```json|\n```|```/g, '').trim();
 const parsed = JSON.parse(cleaned) as ResearchTopic[];
 
-// Add this UTF-8 fix before returning:
-return parsed.map(item => ({
-  ...item,
-  topic: item.topic.replace(/â€™/g, "'").replace(/â€œ/g, '"').replace(/â€/g, '"').replace(/â€"/g, '–').replace(/â/g, "'"),
-  reason: item.reason.replace(/â€™/g, "'").replace(/â€"/g, '–').replace(/â/g, "'"),
-  contentAngle: item.contentAngle.replace(/â€™/g, "'").replace(/â€"/g, '–').replace(/â/g, "'"),
-}));
+// Add UTF-8 fix and niche detection before returning:
+return parsed.map(item => {
+  const fixedTopic = item.topic.replace(/â€™/g, "'").replace(/â€œ/g, '"').replace(/â€/g, '"').replace(/â€"/g, '–').replace(/â/g, "'");
+  return {
+    ...item,
+    topic: fixedTopic,
+    reason: item.reason.replace(/â€™/g, "'").replace(/â€"/g, '–').replace(/â/g, "'"),
+    contentAngle: item.contentAngle.replace(/â€™/g, "'").replace(/â€"/g, '–').replace(/â/g, "'"),
+    niche: detectNiche(fixedTopic + ' ' + item.contentAngle),
+  };
+});
   
 }
 
@@ -181,5 +187,9 @@ Respond ONLY with valid JSON, no markdown:
 
   const raw = await askGemini(prompt);
   const cleaned = raw.replace(/\`\`\`json|\n\`\`\`|\`\`\`/g, '').trim();
-  return JSON.parse(cleaned) as ResearchTopic[];
+  const parsed = JSON.parse(cleaned) as ResearchTopic[];
+  return parsed.map(item => ({
+    ...item,
+    niche: detectNiche(item.topic + ' ' + item.contentAngle),
+  }));
 }
