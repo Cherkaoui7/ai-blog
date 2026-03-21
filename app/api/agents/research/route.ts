@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { runResearchAgent } from '@/agents/research';
 import { supabaseAdmin } from '@/lib/supabase';
 
+export const maxDuration = 60;
+
 export async function POST(req: NextRequest) {
   try {
     const { niche } = await req.json();

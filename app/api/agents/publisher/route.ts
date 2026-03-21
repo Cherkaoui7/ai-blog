@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { runPublisherAgent } from '@/agents/publisher';
 
+export const maxDuration = 60;
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();

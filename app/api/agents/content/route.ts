@@ -3,6 +3,8 @@ import { runContentAgent } from '@/agents/content';
 import { supabaseAdmin } from '@/lib/supabase';
 import type { SEOBrief } from '@/agents/seo';
 
+export const maxDuration = 60;
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
