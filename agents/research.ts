@@ -1,6 +1,6 @@
 import axios from 'axios';
 import * as cheerio from 'cheerio';
-import { askGemini } from '@/lib/gemini';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { detectNiche } from '@/lib/authors';
 
 export type ResearchTopic = {
@@ -10,6 +10,12 @@ export type ResearchTopic = {
   contentAngle: string;
   niche: string;
 };
+async function askGemini(prompt: string): Promise<string> {
+  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-lite' });
+  const result = await model.generateContent(prompt);
+  return result.response.text();
+}
 
 // ── 1. Scrape Google Trends RSS ──────────────────────────────
 async function fetchGoogleTrends(niche: string): Promise<string[]> {
