@@ -9,7 +9,6 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
-    // Accept single brief or array of briefs
     const briefs: SEOBrief[] = Array.isArray(body.briefs)
       ? body.briefs
       : [body.brief];
@@ -27,7 +26,6 @@ export async function POST(req: NextRequest) {
       try {
         const article = await runContentAgent(brief);
 
-        // Upsert — works even if the post was never inserted by SEO agent
         const { error } = await supabaseAdmin
           .from('posts')
           .upsert(
@@ -38,6 +36,8 @@ export async function POST(req: NextRequest) {
               meta_description: brief.metaDescription,
               mdx_content: article.mdx,
               word_count: article.wordCount,
+              // Use the resolved image path — always matches /images/slug.svg
+              image_path: article.imagePath,
               status: 'content_ready',
               updated_at: new Date().toISOString(),
               created_at: new Date().toISOString(),
@@ -45,37 +45,27 @@ export async function POST(req: NextRequest) {
             { onConflict: 'slug' }
           );
 
-        if (error) {
-          console.error('[Content Route] Supabase upsert error:', error.message);
-        } else {
-          console.log(`[Content Route] Saved "${article.slug}" to Supabase`);
-        }
+        if (error) console.error('[Content Route] Supabase error:', error.message);
 
         articles.push({
           slug: article.slug,
           title: article.title,
           wordCount: article.wordCount,
           keyword: article.keyword,
+          imagePath: article.imagePath,
           preview: article.mdx.slice(0, 400) + '...',
         });
 
-        // Delay between articles to avoid Gemini rate limits
-        if (briefs.length > 1) {
-          await new Promise(r => setTimeout(r, 1500));
-        }
+        if (briefs.length > 1) await new Promise(r => setTimeout(r, 1500));
 
       } catch (err: any) {
-        // Expose the real error instead of silently returning []
         console.error(`[Content Route] Failed for "${brief?.slug}":`, err.message);
-        articles.push({
-          slug: brief?.slug || 'unknown',
-          error: err.message,
-        });
+        articles.push({ slug: brief?.slug || 'unknown', error: err.message });
       }
     }
 
     const succeeded = articles.filter(a => !('error' in a));
-    const failed    = articles.filter(a => 'error' in a);
+    const failed = articles.filter(a => 'error' in a);
 
     return NextResponse.json({
       ok: failed.length === 0,
