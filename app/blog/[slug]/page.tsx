@@ -3,10 +3,11 @@ import { formatDate } from '@/lib/utils';
 import { notFound } from 'next/navigation';
 import { MDXRemote } from 'next-mdx-remote/rsc';
 import Link from 'next/link';
+export const dynamic = 'force-dynamic';
+export const dynamicParams = true;
 
 export async function generateStaticParams() {
-  const posts = await getAllPosts();
-  return posts.map(p => ({ slug: p.slug }));
+  return [];
 }
 
 export async function generateMetadata({ params }: { params: { slug: string } }) {
