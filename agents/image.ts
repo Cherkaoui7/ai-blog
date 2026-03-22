@@ -114,16 +114,12 @@ async function generateWithUnsplash(title: string, slug: string): Promise<string
 // ── Source 3: SVG placeholder (always works, no API needed) ──
 function generatePlaceholder(title: string, slug: string): string {
   const colors = [
-    ['#1e3a5f', '#3b82f6'],
-    ['#1a2e1a', '#22c55e'],
-    ['#2d1b1b', '#ef4444'],
-    ['#1e1b2e', '#8b5cf6'],
+    ['#1e3a5f', '#3b82f6'], ['#1a2e1a', '#22c55e'],
+    ['#2d1b1b', '#ef4444'], ['#1e1b2e', '#8b5cf6'],
     ['#1a2535', '#06b6d4'],
   ];
   const [bg, accent] = colors[Math.abs(slug.charCodeAt(0)) % colors.length];
-
-  // Truncate title for SVG
-  const shortTitle = title.length > 50 ? title.slice(0, 47) + '...' : title;
+  const shortTitle = title.length > 40 ? title.slice(0, 37) + '...' : title;
   const words = shortTitle.split(' ');
   const line1 = words.slice(0, Math.ceil(words.length / 2)).join(' ');
   const line2 = words.slice(Math.ceil(words.length / 2)).join(' ');
@@ -132,20 +128,16 @@ function generatePlaceholder(title: string, slug: string): string {
   <rect width="1200" height="630" fill="${bg}"/>
   <rect x="0" y="0" width="6" height="630" fill="${accent}"/>
   <rect x="60" y="280" width="80" height="4" fill="${accent}" opacity="0.6"/>
-  <text x="60" y="260" font-family="system-ui,sans-serif" font-size="42" font-weight="700" fill="white" opacity="0.95">${line1}</text>
-  <text x="60" y="320" font-family="system-ui,sans-serif" font-size="42" font-weight="700" fill="white" opacity="0.95">${line2}</text>
-  <text x="60" y="520" font-family="system-ui,sans-serif" font-size="18" fill="${accent}" opacity="0.8">AI Blog</text>
+  <text x="60" y="260" font-family="system-ui,sans-serif" font-size="42" font-weight="700" fill="white">${line1}</text>
+  <text x="60" y="320" font-family="system-ui,sans-serif" font-size="42" font-weight="700" fill="white">${line2}</text>
+  <text x="60" y="520" font-family="system-ui,sans-serif" font-size="18" fill="${accent}" opacity="0.8">Pulse Editorial</text>
   <circle cx="1100" cy="100" r="180" fill="${accent}" opacity="0.04"/>
-  <circle cx="1050" cy="550" r="100" fill="${accent}" opacity="0.06"/>
 </svg>`;
 
-  const dir = path.join(process.cwd(), 'public', 'images');
-  ensureDir(dir);
-  const filePath = path.join(dir, `${slug}.svg`);
-  fs.writeFileSync(filePath, svg);
-
-  console.log(`[Image Agent] Placeholder SVG saved: /images/${slug}.svg`);
-  return `/images/${slug}.svg`;
+  // Return as data URL — no filesystem needed
+  const dataUrl = `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`;
+  console.log(`[Image Agent] Generated inline SVG for: ${slug}`);
+  return dataUrl;
 }
 
 // ── Main export ───────────────────────────────────────────────
