@@ -1,47 +1,21 @@
-import fs from 'fs';
-import path from 'path';
-
 export type GeneratedImage = {
   slug: string;
   imagePath: string;
   source: 'dalle' | 'unsplash' | 'placeholder';
 };
 
-// ── Helpers ──────────────────────────────────────────────────
-function ensureDir(dir: string) {
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-}
-
-async function saveImageFromUrl(url: string, filePath: string): Promise<void> {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`Failed to fetch image: ${res.status}`);
-  const buffer = Buffer.from(await res.arrayBuffer());
-  fs.writeFileSync(filePath, buffer);
-}
-
-// ── Source 1: DALL-E 3 ───────────────────────────────────────
+// ── DALL-E 3 (OpenAI) ─────────────────────────────────────────
 async function generateWithDallE(title: string, slug: string): Promise<string | null> {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) return null;
 
   try {
-    const prompt = `A professional, modern blog featured image for an article titled "${title}". 
-Clean editorial style, no text, no words, photorealistic. 
-Wide format, bright and inviting, suitable for a blog header.`;
+    const prompt = `A professional, modern blog featured image for an article titled "${title}". Clean editorial style, no text, no words, photorealistic. Wide format, bright and inviting, suitable for a blog header.`;
 
     const res = await fetch('https://api.openai.com/v1/images/generations', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: 'dall-e-3',
-        prompt,
-        n: 1,
-        size: '1792x1024',
-        quality: 'standard',
-      }),
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({ model: 'dall-e-3', prompt, n: 1, size: '1792x1024', quality: 'standard' }),
     });
 
     const data = await res.json();
@@ -53,24 +27,23 @@ Wide format, bright and inviting, suitable for a blog header.`;
     const imageUrl = data.data?.[0]?.url;
     if (!imageUrl) return null;
 
-    const dir = path.join(process.cwd(), 'public', 'images');
-    ensureDir(dir);
-    const filePath = path.join(dir, `${slug}.jpg`);
-    await saveImageFromUrl(imageUrl, filePath);
+    // Fetch image and convert to base64 data URL (no filesystem needed)
+    const imgRes = await fetch(imageUrl);
+    const buffer = Buffer.from(await imgRes.arrayBuffer());
+    const dataUrl = `data:image/jpeg;base64,${buffer.toString('base64')}`;
 
-    console.log(`[Image Agent] DALL-E image saved: /images/${slug}.jpg`);
-    return `/images/${slug}.jpg`;
+    console.log(`[Image Agent] DALL-E image generated for: ${slug}`);
+    return dataUrl;
   } catch (err: any) {
     console.error('[Image Agent] DALL-E failed:', err.message);
     return null;
   }
 }
 
-// ── Source 2: Unsplash (free, no key needed for single images) ─
+// ── Unsplash (free, no key needed) ────────────────────────────
 async function generateWithUnsplash(title: string, slug: string): Promise<string | null> {
   try {
-    // Extract 2-3 key words from title for better image matching
-    const stopWords = ['how', 'to', 'the', 'a', 'an', 'and', 'or', 'in', 'on', 'for', 'with', 'your'];
+    const stopWords = ['how', 'to', 'the', 'a', 'an', 'and', 'or', 'in', 'on', 'for', 'with', 'your', 'why', 'what', 'when', 'you', 'should'];
     const keywords = title
       .toLowerCase()
       .replace(/[^a-z\s]/g, '')
@@ -80,11 +53,9 @@ async function generateWithUnsplash(title: string, slug: string): Promise<string
       .join(',');
 
     const unsplashKey = process.env.UNSPLASH_ACCESS_KEY;
-
     let imageUrl: string;
 
     if (unsplashKey) {
-      // With API key — higher quality, specific search
       const res = await fetch(
         `https://api.unsplash.com/photos/random?query=${encodeURIComponent(keywords)}&orientation=landscape&content_filter=high`,
         { headers: { Authorization: `Client-ID ${unsplashKey}` } }
@@ -92,70 +63,72 @@ async function generateWithUnsplash(title: string, slug: string): Promise<string
       const data = await res.json();
       imageUrl = data?.urls?.regular;
     } else {
-      // Without API key — use source.unsplash.com (free, no auth)
       imageUrl = `https://source.unsplash.com/1200x630/?${encodeURIComponent(keywords)}`;
     }
 
     if (!imageUrl) return null;
 
-    const dir = path.join(process.cwd(), 'public', 'images');
-    ensureDir(dir);
-    const filePath = path.join(dir, `${slug}.jpg`);
-    await saveImageFromUrl(imageUrl, filePath);
+    const imgRes = await fetch(imageUrl);
+    if (!imgRes.ok) return null;
+    const buffer = Buffer.from(await imgRes.arrayBuffer());
+    const contentType = imgRes.headers.get('content-type') || 'image/jpeg';
+    const dataUrl = `data:${contentType};base64,${buffer.toString('base64')}`;
 
-    console.log(`[Image Agent] Unsplash image saved: /images/${slug}.jpg`);
-    return `/images/${slug}.jpg`;
+    console.log(`[Image Agent] Unsplash image generated for: ${slug}`);
+    return dataUrl;
   } catch (err: any) {
     console.error('[Image Agent] Unsplash failed:', err.message);
     return null;
   }
 }
 
-// ── Source 3: SVG placeholder (always works, no API needed) ──
+// ── SVG Placeholder (always works, no filesystem) ─────────────
 function generatePlaceholder(title: string, slug: string): string {
-  const colors = [
-    ['#1e3a5f', '#3b82f6'], ['#1a2e1a', '#22c55e'],
-    ['#2d1b1b', '#ef4444'], ['#1e1b2e', '#8b5cf6'],
+  const palettes = [
+    ['#1e3a5f', '#3b82f6'],
+    ['#1a2e1a', '#22c55e'],
+    ['#2d1b1b', '#ef4444'],
+    ['#1e1b2e', '#8b5cf6'],
     ['#1a2535', '#06b6d4'],
+    ['#2d1f0a', '#f59e0b'],
+    ['#1f1a2e', '#a78bfa'],
   ];
-  const [bg, accent] = colors[Math.abs(slug.charCodeAt(0)) % colors.length];
-  const shortTitle = title.length > 40 ? title.slice(0, 37) + '...' : title;
+  const [bg, accent] = palettes[
+    Math.abs(slug.charCodeAt(0) + (slug.charCodeAt(slug.length - 1) || 0)) % palettes.length
+  ];
+
+  const shortTitle = title.length > 45 ? title.slice(0, 42) + '...' : title;
   const words = shortTitle.split(' ');
-  const line1 = words.slice(0, Math.ceil(words.length / 2)).join(' ');
-  const line2 = words.slice(Math.ceil(words.length / 2)).join(' ');
+  const mid = Math.ceil(words.length / 2);
+  const line1 = words.slice(0, mid).join(' ');
+  const line2 = words.slice(mid).join(' ');
 
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
   <rect width="1200" height="630" fill="${bg}"/>
-  <rect x="0" y="0" width="6" height="630" fill="${accent}"/>
-  <rect x="60" y="280" width="80" height="4" fill="${accent}" opacity="0.6"/>
-  <text x="60" y="260" font-family="system-ui,sans-serif" font-size="42" font-weight="700" fill="white">${line1}</text>
-  <text x="60" y="320" font-family="system-ui,sans-serif" font-size="42" font-weight="700" fill="white">${line2}</text>
-  <text x="60" y="520" font-family="system-ui,sans-serif" font-size="18" fill="${accent}" opacity="0.8">Pulse Editorial</text>
-  <circle cx="1100" cy="100" r="180" fill="${accent}" opacity="0.04"/>
+  <rect x="0" y="0" width="8" height="630" fill="${accent}"/>
+  <rect x="60" y="295" width="100" height="4" fill="${accent}" opacity="0.7"/>
+  <text x="60" y="270" font-family="system-ui,sans-serif" font-size="44" font-weight="700" fill="white" opacity="0.95">${line1}</text>
+  ${line2 ? `<text x="60" y="335" font-family="system-ui,sans-serif" font-size="44" font-weight="700" fill="white" opacity="0.95">${line2}</text>` : ''}
+  <text x="60" y="530" font-family="system-ui,sans-serif" font-size="20" fill="${accent}" opacity="0.9" font-weight="500">Pulse Editorial</text>
+  <circle cx="1100" cy="80" r="200" fill="${accent}" opacity="0.05"/>
+  <circle cx="1050" cy="560" r="120" fill="${accent}" opacity="0.07"/>
 </svg>`;
 
-  // Return as data URL — no filesystem needed
-  const dataUrl = `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`;
-  console.log(`[Image Agent] Generated inline SVG for: ${slug}`);
-  return dataUrl;
+  return `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`;
 }
 
 // ── Main export ───────────────────────────────────────────────
-export async function runImageAgent(
-  title: string,
-  slug: string
-): Promise<GeneratedImage> {
+export async function runImageAgent(title: string, slug: string): Promise<GeneratedImage> {
   console.log(`[Image Agent] Generating image for: "${title}"`);
 
-  // Try DALL-E first (best quality, requires OPENAI_API_KEY)
+  // 1. DALL-E 3 — best quality (needs OPENAI_API_KEY)
   const dalle = await generateWithDallE(title, slug);
   if (dalle) return { slug, imagePath: dalle, source: 'dalle' };
 
-  // Fall back to Unsplash (free, no key required)
+  // 2. Unsplash — free, no key needed
   const unsplash = await generateWithUnsplash(title, slug);
   if (unsplash) return { slug, imagePath: unsplash, source: 'unsplash' };
 
-  // Last resort: generate a clean SVG placeholder (always works)
-  const placeholder = generatePlaceholder(title, slug);
-  return { slug, imagePath: placeholder, source: 'placeholder' };
+  // 3. SVG placeholder — always works, no external calls
+  return { slug, imagePath: generatePlaceholder(title, slug), source: 'placeholder' };
 }

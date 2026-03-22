@@ -27,10 +27,10 @@ function fixEncoding(str: string): string {
 }
 
 export default function PipelinePage() {
-  const [topic, setTopic]       = useState('');
-  const [stage, setStage]       = useState<Stage>('idle');
-  const [logs, setLogs]         = useState<Log[]>([]);
-  const [result, setResult]     = useState<{ url?: string; title?: string } | null>(null);
+  const [topic, setTopic]           = useState('');
+  const [stage, setStage]           = useState<Stage>('idle');
+  const [logs, setLogs]             = useState<Log[]>([]);
+  const [result, setResult]         = useState<{ url?: string; title?: string } | null>(null);
   const [puterReady, setPuterReady] = useState(false);
 
   useEffect(() => {
@@ -104,7 +104,8 @@ Return ONLY valid JSON, no markdown:
       setStage('content');
       addLog('Content', 'running', 'Writing article with GPT-5.4...');
       const articleBody = fixEncoding(await askPuter(
-        `You are a professional blog writer. Write a complete blog article.
+        `You are a professional blog writer and content designer. Write a complete, visually rich blog article.
+
 Title: ${seo.titleTag}
 Primary keyword: "${seo.primaryKeyword}" (use 4-6 times naturally)
 Secondary keywords: ${seo.secondaryKeywords.join(', ')}
@@ -112,29 +113,45 @@ Target word count: ${seo.targetWordCount} words
 H2 headings to use:
 ${seo.h2Tags.map((h: string, i: number) => `${i + 1}. ${h}`).join('\n')}
 
-Rules:
-- Friendly, conversational tone
-- First person occasionally ("In my experience...", "I've found...")
-- Use contractions (don't, you're, I'll)
-- Each H2 section: 200-300 words minimum
-- Add specific examples and numbers
-- Add [[PRODUCT_LINK:keyword]] where a product fits naturally (max 3)
-- NEVER use: "In today's world", "It's important to note", "In conclusion", "Leverage", "Delve", "Game-changer"
-- Use ## for H2, ### for H3, **bold** for key terms, > for tips
+VISUAL FORMATTING RULES:
+- Start with a quick summary box: > ## 📋 Quick Summary\\n> - key point 1\\n> - key point 2\\n> - key point 3
+- Start every H2 with a relevant emoji: ## 💡 Heading text
+- Use tables for comparisons or data (markdown table format)
+- Use ✅ ❌ for pros/cons instead of plain bullets  
+- Use numbered lists with **bold first word**: **1. Track it** — explanation
+- Add tip callouts: > 💡 **Pro tip:** your tip here
+- Break paragraphs — max 3 sentences each
+- End with action checklist: ## ✅ Your Action Plan\\n- [ ] Step 1\\n- [ ] Step 2
 
-Output only the article body markdown. No frontmatter.`,
+WRITING RULES:
+- Friendly conversational tone like a smart friend explaining things
+- First person occasionally ("In my experience...", "I've found...")
+- Use contractions (don't, you're, I'll, we've)
+- Add [[PRODUCT_LINK:keyword]] where a product fits naturally (max 3)
+- NEVER use: "In today's world", "It's important to note", "In conclusion", "Leverage", "Delve", "Game-changer", "Comprehensive"
+- Use ## for H2, ### for H3, **bold** for key terms, > for callouts
+
+Output only the article body markdown. No frontmatter. Make it look amazing.`,
         'gpt-5.4'
       ));
 
-      // ── Word count calculated here ─────────────────────────
-      const wordCount = articleBody
-        .replace(/[#*`_\[\]()>-]/g, '')
-        .split(/\s+/)
-        .filter(Boolean).length;
-      const readTime = `${Math.ceil(wordCount / 200)} min read`;
-      const date = new Date().toISOString().split('T')[0];
-      const imagePath = `/images/${slug}.svg`;
+      const wordCount = articleBody.replace(/[#*`_\[\]()>-]/g, '').split(/\s+/).filter(Boolean).length;
+      const readTime  = `${Math.ceil(wordCount / 200)} min read`;
+      const date      = new Date().toISOString().split('T')[0];
 
+      addLog('Content', 'ok', `Written — ${wordCount.toLocaleString()} words`);
+
+      // ── Step 4: Image (server — DALL-E or SVG data URL) ───
+      setStage('image');
+      addLog('Image', 'running', 'Generating featured image...');
+      const r4 = await serverPost('/api/agents/image', { title: seo.titleTag, slug });
+      const imageResult = r4.results?.[0];
+      // Use the data URL returned by the image agent (works on Vercel)
+      const imagePath = imageResult?.imagePath || '';
+      const imageSource = imageResult?.source || 'placeholder';
+      addLog('Image', 'ok', `Image ready (${imageSource})`);
+
+      // Build MDX with actual image path (data URL)
       const mdx = `---
 title: "${seo.titleTag.replace(/"/g, "'")}"
 description: "${seo.metaDescription.replace(/"/g, "'")}"
@@ -149,17 +166,6 @@ tags: [${seo.secondaryKeywords.slice(0, 4).map((k: string) => `"${k.replace(/"/g
 ---
 
 ${articleBody}`;
-
-      // ✅ Fix 1 — use local wordCount variable directly
-      addLog('Content', 'ok', `Written — ${wordCount.toLocaleString()} words`);
-
-      // ── Step 4: Image (server — always works) ─────────────
-      setStage('image');
-      addLog('Image', 'running', 'Generating featured image...');
-      // ✅ Fix 2 — use server image agent directly, no Puter image (requires login)
-      const r4 = await serverPost('/api/agents/image', { title: seo.titleTag, slug });
-      const imageSource = r4.results?.[0]?.source || 'placeholder';
-      addLog('Image', 'ok', `Image ready (${imageSource})`);
 
       // ── Step 5: Save + Publish ────────────────────────────
       setStage('publish');
@@ -188,9 +194,9 @@ ${articleBody}`;
     }
   }
 
-  const stageOrder = ['Research', 'SEO', 'Content', 'Image', 'Publish'];
-  const isRunning = !['idle', 'done', 'error'].includes(stage);
-  const statusIcon: Record<string, string> = { ok: '✓', error: '✗', running: '◌' };
+  const stageOrder  = ['Research', 'SEO', 'Content', 'Image', 'Publish'];
+  const isRunning   = !['idle', 'done', 'error'].includes(stage);
+  const statusIcon: Record<string, string>  = { ok: '✓', error: '✗', running: '◌' };
   const statusColor: Record<string, string> = { ok: '#16a34a', error: '#dc2626', running: '#d97706' };
 
   return (
