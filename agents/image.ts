@@ -1,49 +1,47 @@
 export type GeneratedImage = {
   slug: string;
   imagePath: string;
-  source: 'dalle' | 'unsplash' | 'placeholder';
+  source: 'pollinations' | 'unsplash' | 'placeholder';
 };
 
-// ── DALL-E 3 (OpenAI) ─────────────────────────────────────────
-async function generateWithDallE(title: string, slug: string): Promise<string | null> {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) return null;
-
+// ── 1. Pollinations.ai (free, no key, unlimited) ──────────────
+async function generateWithPollinations(title: string, slug: string): Promise<string | null> {
   try {
-    const prompt = `A professional, modern blog featured image for an article titled "${title}". Clean editorial style, no text, no words, photorealistic. Wide format, bright and inviting, suitable for a blog header.`;
+    const prompt = encodeURIComponent(
+      `Professional blog featured image for article titled "${title}". Clean editorial style, no text, no words, photorealistic, wide format, bright and inviting, suitable for a blog header.`
+    );
+    const url = `https://image.pollinations.ai/prompt/${prompt}?width=1200&height=630&nologo=true&enhance=true`;
 
-    const res = await fetch('https://api.openai.com/v1/images/generations', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-      body: JSON.stringify({ model: 'dall-e-3', prompt, n: 1, size: '1792x1024', quality: 'standard' }),
+    console.log(`[Image Agent] Fetching from Pollinations...`);
+    const res = await fetch(url, {
+      signal: AbortSignal.timeout(30000),
     });
 
-    const data = await res.json();
     if (!res.ok) {
-      console.error('[Image Agent] DALL-E error:', data.error?.message);
+      console.error(`[Image Agent] Pollinations returned ${res.status}`);
       return null;
     }
 
-    const imageUrl = data.data?.[0]?.url;
-    if (!imageUrl) return null;
+    const buffer = Buffer.from(await res.arrayBuffer());
+    if (buffer.length < 1000) {
+      console.error('[Image Agent] Pollinations returned empty image');
+      return null;
+    }
 
-    // Fetch image and convert to base64 data URL (no filesystem needed)
-    const imgRes = await fetch(imageUrl);
-    const buffer = Buffer.from(await imgRes.arrayBuffer());
     const dataUrl = `data:image/jpeg;base64,${buffer.toString('base64')}`;
-
-    console.log(`[Image Agent] DALL-E image generated for: ${slug}`);
+    console.log(`[Image Agent] Pollinations image ready for: ${slug} (${Math.round(buffer.length / 1024)}KB)`);
     return dataUrl;
   } catch (err: any) {
-    console.error('[Image Agent] DALL-E failed:', err.message);
+    console.error('[Image Agent] Pollinations failed:', err.message);
     return null;
   }
 }
 
-// ── Unsplash (free, no key needed) ────────────────────────────
+// ── 2. Unsplash (free, no key needed) ────────────────────────
 async function generateWithUnsplash(title: string, slug: string): Promise<string | null> {
   try {
-    const stopWords = ['how', 'to', 'the', 'a', 'an', 'and', 'or', 'in', 'on', 'for', 'with', 'your', 'why', 'what', 'when', 'you', 'should'];
+    const stopWords = ['how', 'to', 'the', 'a', 'an', 'and', 'or', 'in', 'on', 'for',
+      'with', 'your', 'why', 'what', 'when', 'you', 'should', 'can', 'do', 'is', 'are'];
     const keywords = title
       .toLowerCase()
       .replace(/[^a-z\s]/g, '')
@@ -68,13 +66,14 @@ async function generateWithUnsplash(title: string, slug: string): Promise<string
 
     if (!imageUrl) return null;
 
-    const imgRes = await fetch(imageUrl);
+    const imgRes = await fetch(imageUrl, { signal: AbortSignal.timeout(15000) });
     if (!imgRes.ok) return null;
+
     const buffer = Buffer.from(await imgRes.arrayBuffer());
     const contentType = imgRes.headers.get('content-type') || 'image/jpeg';
     const dataUrl = `data:${contentType};base64,${buffer.toString('base64')}`;
 
-    console.log(`[Image Agent] Unsplash image generated for: ${slug}`);
+    console.log(`[Image Agent] Unsplash image ready for: ${slug}`);
     return dataUrl;
   } catch (err: any) {
     console.error('[Image Agent] Unsplash failed:', err.message);
@@ -82,7 +81,7 @@ async function generateWithUnsplash(title: string, slug: string): Promise<string
   }
 }
 
-// ── SVG Placeholder (always works, no filesystem) ─────────────
+// ── 3. SVG Placeholder (always works, no external calls) ──────
 function generatePlaceholder(title: string, slug: string): string {
   const palettes = [
     ['#1e3a5f', '#3b82f6'],
@@ -92,9 +91,10 @@ function generatePlaceholder(title: string, slug: string): string {
     ['#1a2535', '#06b6d4'],
     ['#2d1f0a', '#f59e0b'],
     ['#1f1a2e', '#a78bfa'],
+    ['#1a2d2d', '#14b8a6'],
   ];
   const [bg, accent] = palettes[
-    Math.abs(slug.charCodeAt(0) + (slug.charCodeAt(slug.length - 1) || 0)) % palettes.length
+    Math.abs((slug.charCodeAt(0) || 0) + (slug.charCodeAt(slug.length - 1) || 0)) % palettes.length
   ];
 
   const shortTitle = title.length > 45 ? title.slice(0, 42) + '...' : title;
@@ -112,6 +112,7 @@ function generatePlaceholder(title: string, slug: string): string {
   <text x="60" y="530" font-family="system-ui,sans-serif" font-size="20" fill="${accent}" opacity="0.9" font-weight="500">Pulse Editorial</text>
   <circle cx="1100" cy="80" r="200" fill="${accent}" opacity="0.05"/>
   <circle cx="1050" cy="560" r="120" fill="${accent}" opacity="0.07"/>
+  <circle cx="900" cy="300" r="80" fill="${accent}" opacity="0.03"/>
 </svg>`;
 
   return `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`;
@@ -121,14 +122,15 @@ function generatePlaceholder(title: string, slug: string): string {
 export async function runImageAgent(title: string, slug: string): Promise<GeneratedImage> {
   console.log(`[Image Agent] Generating image for: "${title}"`);
 
-  // 1. DALL-E 3 — best quality (needs OPENAI_API_KEY)
-  const dalle = await generateWithDallE(title, slug);
-  if (dalle) return { slug, imagePath: dalle, source: 'dalle' };
+  // 1. Pollinations.ai — free, no key, real AI images
+  const pollinations = await generateWithPollinations(title, slug);
+  if (pollinations) return { slug, imagePath: pollinations, source: 'pollinations' };
 
-  // 2. Unsplash — free, no key needed
+  // 2. Unsplash — free stock photos
   const unsplash = await generateWithUnsplash(title, slug);
   if (unsplash) return { slug, imagePath: unsplash, source: 'unsplash' };
 
-  // 3. SVG placeholder — always works, no external calls
+  // 3. SVG placeholder — always works
+  console.log(`[Image Agent] Using SVG placeholder for: ${slug}`);
   return { slug, imagePath: generatePlaceholder(title, slug), source: 'placeholder' };
 }
