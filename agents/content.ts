@@ -1,4 +1,4 @@
-import { askGemini } from '@/lib/gemini';
+import { askOpenRouter } from '@/lib/openrouter';
 import type { SEOBrief } from '@/agents/seo';
 
 export type GeneratedArticle = {
@@ -14,8 +14,8 @@ export type GeneratedArticle = {
 function fixEncoding(str: string): string {
   return str
     .replace(/â€™/g, "'").replace(/â€œ/g, '"').replace(/â€/g, '"')
-    .replace(/â€¦/g, '...').replace(/â€"/g, '—').replace(/â€"/g, '–')
-    .replace(/â/g, "'").replace(/\s{2,}/g, ' ').trim();
+    .replace(/â€¦/g, '...').replace(/â/g, "'")
+    .replace(/\s{2,}/g, ' ').trim();
 }
 
 function countWords(text: string): number {
@@ -30,41 +30,49 @@ async function generateArticle(brief: SEOBrief): Promise<string> {
   const h2List = brief.h2Tags.map((h, i) => `${i + 1}. ${h}`).join('\n');
   const secondaryList = brief.secondaryKeywords.join(', ');
 
-  const prompt = `
-You are a professional blog writer. Write a complete, high-quality blog article.
+  const prompt = `You are a professional blog writer and content designer. Write a complete, visually rich blog article that readers love.
 
 ARTICLE BRIEF:
 - Title: ${brief.titleTag}
 - Primary keyword: "${brief.primaryKeyword}" (use naturally 4-6 times)
 - Secondary keywords: ${secondaryList} (use each at least once)
 - Target word count: ${brief.targetWordCount} words
-- Structure (use these exact H2 headings):
+- H2 headings to use:
 ${h2List}
 
+VISUAL FORMATTING RULES (very important):
+- Start with a quick summary box:
+  > ## 📋 Quick Summary
+  > - Key point 1
+  > - Key point 2  
+  > - Key point 3
+- Start every H2 with a relevant emoji: ## 💡 Heading text
+- Use markdown tables for comparisons, schedules, or data
+- Use ✅ and ❌ for pros/cons lists instead of plain bullets
+- Use numbered lists with **bold first word**: **1. Track it** — explanation here
+- Add tip callout boxes: > 💡 **Pro tip:** your tip here
+- Add warning boxes: > ⚠️ **Watch out:** your warning here
+- Break paragraphs — max 3 sentences each
+- Add a key stats section as a table where relevant
+- End with a clear action checklist:
+  ## ✅ Your Action Plan
+  - [ ] Step 1
+  - [ ] Step 2
+  - [ ] Step 3
+
 WRITING RULES:
-- Write in a friendly, helpful, conversational tone
-- Use first person occasionally ("In my experience...", "I've found that...")
-- Use informal contractions (don't, I'll, you're, we've)
-- Each H2 section must be 200-300 words minimum
-- Use bullet points and numbered lists where helpful
+- Friendly, conversational tone — like a smart friend explaining things
+- First person occasionally ("In my experience...", "I've found...", "I've tested...")
+- Use contractions (don't, you're, I'll, we've)
+- Each H2 section: minimum 200 words
 - Add specific examples, numbers, and actionable tips
-- Include a strong intro (hook + what reader will learn)
-- Include a conclusion with a clear call to action
-- Add [[PRODUCT_LINK:keyword]] placeholders where a product fits naturally (max 3)
-- NEVER use: "In today's fast-paced world", "It's important to note",
-  "In conclusion", "Leverage", "Delve", "Comprehensive", "Game-changer",
-  "Unlock", "Dive into", "Cutting-edge", "Moreover", "Furthermore"
+- Add [[PRODUCT_LINK:keyword]] where a product recommendation fits naturally (max 3)
+- NEVER use: "In today's world", "It's important to note", "In conclusion", "Leverage", "Delve", "Game-changer", "Comprehensive", "Moreover", "Furthermore"
+- Use ## for H2, ### for H3, **bold** for key terms, > for callouts
 
-FORMAT:
-- Use ## for H2 headings
-- Use ### for H3 subheadings
-- Use **bold** for key terms
-- Use > for tip/callout blocks
+Output only the article body markdown. No frontmatter. Make it look amazing.`;
 
-Output only the markdown article body, nothing else. No frontmatter.
-`;
-
-  const content = await askGemini(prompt, false);
+  const content = await askOpenRouter(prompt, 'deepseek/deepseek-chat-v3.1');
   return fixEncoding(content);
 }
 
@@ -94,11 +102,9 @@ export async function runContentAgent(
   brief: SEOBrief,
   imagePath?: string
 ): Promise<GeneratedArticle> {
-  console.log(`[Content Agent] Writing article: "${brief.titleTag}"`);
+  console.log(`[Content Agent] Writing: "${brief.titleTag}"`);
 
-  // Always derive image path from slug — guarantees it matches the image agent output
   const resolvedImagePath = imagePath || `/images/${brief.slug}.svg`;
-
   const body = await generateArticle(brief);
   const wordCount = countWords(body);
   const mdx = buildMDX(brief, body, resolvedImagePath);

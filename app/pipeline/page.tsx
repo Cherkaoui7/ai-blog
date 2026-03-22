@@ -1,45 +1,15 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 type Stage = 'idle' | 'research' | 'seo' | 'content' | 'image' | 'publish' | 'done' | 'error';
 type Log = { stage: string; status: 'ok' | 'error' | 'running'; message: string };
 
-declare global {
-  interface Window { puter: any; }
-}
-
-async function askPuter(prompt: string, model = 'gpt-5.4-nano'): Promise<string> {
-  const response = await window.puter.ai.chat(prompt, { model });
-  return typeof response === 'string'
-    ? response
-    : response?.message?.content?.[0]?.text || String(response);
-}
-
-function toSlug(text: string): string {
-  return text.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-').slice(0, 80);
-}
-
-function fixEncoding(str: string): string {
-  return str
-    .replace(/â€™/g, "'").replace(/â€œ/g, '"').replace(/â€/g, '"')
-    .replace(/â/g, "'").replace(/\s{2,}/g, ' ').trim();
-}
-
 export default function PipelinePage() {
-  const [topic, setTopic]           = useState('');
-  const [stage, setStage]           = useState<Stage>('idle');
-  const [logs, setLogs]             = useState<Log[]>([]);
-  const [result, setResult]         = useState<{ url?: string; title?: string } | null>(null);
-  const [puterReady, setPuterReady] = useState(false);
-
-  useEffect(() => {
-    if (window.puter) { setPuterReady(true); return; }
-    const script = document.createElement('script');
-    script.src = 'https://js.puter.com/v2/';
-    script.onload = () => setPuterReady(true);
-    document.head.appendChild(script);
-  }, []);
+  const [topic, setTopic]   = useState('');
+  const [stage, setStage]   = useState<Stage>('idle');
+  const [logs, setLogs]     = useState<Log[]>([]);
+  const [result, setResult] = useState<{ url?: string; title?: string } | null>(null);
 
   function addLog(s: string, status: 'ok' | 'error' | 'running', message: string) {
     setLogs(prev => {
@@ -60,133 +30,49 @@ export default function PipelinePage() {
   }
 
   async function runPipeline() {
-    if (!topic.trim() || !puterReady) return;
+    if (!topic.trim()) return;
     setLogs([]); setResult(null);
 
     try {
-      // ── Step 1: Research (Puter.js) ───────────────────────
+      // ── Step 1: Research ──────────────────────────────────
       setStage('research');
       addLog('Research', 'running', 'Finding article ideas...');
-      const researchRaw = await askPuter(
-        `You are an SEO content strategist. Generate 5 specific blog article ideas for: "${topic}"
-Each must target a real Google search query. Return ONLY valid JSON array, no markdown:
-[{"topic":"title","reason":"why people search this","estimatedSearchVolume":"high|medium|low","contentAngle":"specific angle to rank"}]`,
-        'gpt-5.4-nano'
-      );
-      const topics = JSON.parse(researchRaw.replace(/```json|```/g, '').trim());
-      addLog('Research', 'ok', `Found ${topics.length} topics`);
+      const r1 = await serverPost('/api/agents/research', { niche: topic });
+      if (!r1.ok) throw new Error(r1.error);
+      addLog('Research', 'ok', `Found ${r1.topics.length} topics`);
 
-      // ── Step 2: SEO (Puter.js) ────────────────────────────
+      // ── Step 2: SEO ───────────────────────────────────────
       setStage('seo');
       addLog('SEO', 'running', 'Generating keyword brief...');
-      const bestTopic = topics[0];
-      const seoRaw = await askPuter(
-        `You are an SEO expert. Generate a keyword brief for this blog topic.
-Topic: "${bestTopic.topic}"
-Content angle: "${bestTopic.contentAngle}"
-Return ONLY valid JSON, no markdown:
-{
-  "primaryKeyword": "exact phrase people google (3-6 words)",
-  "secondaryKeywords": ["kw1","kw2","kw3","kw4","kw5"],
-  "titleTag": "max 60 chars, include keyword",
-  "metaDescription": "max 155 chars, include keyword, add value",
-  "h2Tags": ["h1","h2","h3","h4","h5","h6"],
-  "targetWordCount": 1800,
-  "competition": "low"
-}`,
-        'gpt-5.4-nano'
-      );
-      const seo = JSON.parse(seoRaw.replace(/```json|```/g, '').trim());
-      const slug = toSlug(seo.primaryKeyword || bestTopic.topic);
-      addLog('SEO', 'ok', `Keyword: "${seo.primaryKeyword}"`);
+      const r2 = await serverPost('/api/agents/seo', { topics: r1.topics });
+      if (!r2.ok || !r2.briefs?.length) throw new Error(r2.error || 'No SEO brief generated');
+      const brief = r2.briefs[0];
+      addLog('SEO', 'ok', `Keyword: "${brief.primaryKeyword}"`);
 
-      // ── Step 3: Content (Puter.js) ────────────────────────
+      // ── Step 3: Content ───────────────────────────────────
       setStage('content');
-      addLog('Content', 'running', 'Writing article with GPT-5.4...');
-      const articleBody = fixEncoding(await askPuter(
-        `You are a professional blog writer and content designer. Write a complete, visually rich blog article.
+      addLog('Content', 'running', 'Writing article...');
+      const r3 = await serverPost('/api/agents/content', { brief });
+      if (!r3.ok || !r3.articles?.length) throw new Error(r3.errors?.[0]?.error || 'Content failed');
+      const article = r3.articles[0];
+      addLog('Content', 'ok', `Written — ${article.wordCount?.toLocaleString()} words`);
 
-Title: ${seo.titleTag}
-Primary keyword: "${seo.primaryKeyword}" (use 4-6 times naturally)
-Secondary keywords: ${seo.secondaryKeywords.join(', ')}
-Target word count: ${seo.targetWordCount} words
-H2 headings to use:
-${seo.h2Tags.map((h: string, i: number) => `${i + 1}. ${h}`).join('\n')}
-
-VISUAL FORMATTING RULES:
-- Start with a quick summary box: > ## 📋 Quick Summary\\n> - key point 1\\n> - key point 2\\n> - key point 3
-- Start every H2 with a relevant emoji: ## 💡 Heading text
-- Use tables for comparisons or data (markdown table format)
-- Use ✅ ❌ for pros/cons instead of plain bullets  
-- Use numbered lists with **bold first word**: **1. Track it** — explanation
-- Add tip callouts: > 💡 **Pro tip:** your tip here
-- Break paragraphs — max 3 sentences each
-- End with action checklist: ## ✅ Your Action Plan\\n- [ ] Step 1\\n- [ ] Step 2
-
-WRITING RULES:
-- Friendly conversational tone like a smart friend explaining things
-- First person occasionally ("In my experience...", "I've found...")
-- Use contractions (don't, you're, I'll, we've)
-- Add [[PRODUCT_LINK:keyword]] where a product fits naturally (max 3)
-- NEVER use: "In today's world", "It's important to note", "In conclusion", "Leverage", "Delve", "Game-changer", "Comprehensive"
-- Use ## for H2, ### for H3, **bold** for key terms, > for callouts
-
-Output only the article body markdown. No frontmatter. Make it look amazing.`,
-        'gpt-5.4'
-      ));
-
-      const wordCount = articleBody.replace(/[#*`_\[\]()>-]/g, '').split(/\s+/).filter(Boolean).length;
-      const readTime  = `${Math.ceil(wordCount / 200)} min read`;
-      const date      = new Date().toISOString().split('T')[0];
-
-      addLog('Content', 'ok', `Written — ${wordCount.toLocaleString()} words`);
-
-      // ── Step 4: Image (server — DALL-E or SVG data URL) ───
+      // ── Step 4: Image ─────────────────────────────────────
       setStage('image');
       addLog('Image', 'running', 'Generating featured image...');
-      const r4 = await serverPost('/api/agents/image', { title: seo.titleTag, slug });
-      const imageResult = r4.results?.[0];
-      // Use the data URL returned by the image agent (works on Vercel)
-      const imagePath = imageResult?.imagePath || '';
-      const imageSource = imageResult?.source || 'placeholder';
-      addLog('Image', 'ok', `Image ready (${imageSource})`);
+      const r4 = await serverPost('/api/agents/image', { title: article.title, slug: article.slug });
+      if (!r4.ok) throw new Error(r4.error);
+      addLog('Image', 'ok', `Image ready (${r4.results?.[0]?.source})`);
 
-      // Build MDX with actual image path (data URL)
-      const mdx = `---
-title: "${seo.titleTag.replace(/"/g, "'")}"
-description: "${seo.metaDescription.replace(/"/g, "'")}"
-date: "${date}"
-slug: "${slug}"
-keyword: "${seo.primaryKeyword}"
-image: "${imagePath}"
-author: "Editorial Team"
-readTime: "${readTime}"
-lastUpdated: "${date}"
-tags: [${seo.secondaryKeywords.slice(0, 4).map((k: string) => `"${k.replace(/"/g, "'")}"`).join(', ')}]
----
-
-${articleBody}`;
-
-      // ── Step 5: Save + Publish ────────────────────────────
+      // ── Step 5: Publish ───────────────────────────────────
       setStage('publish');
-      addLog('Publish', 'running', 'Saving and publishing...');
-
-      await serverPost('/api/agents/save-content', {
-        slug,
-        title: seo.titleTag,
-        keyword: seo.primaryKeyword,
-        metaDescription: seo.metaDescription,
-        mdxContent: mdx,
-        wordCount,
-        imagePath,
-      });
-
-      const r5 = await serverPost('/api/agents/publisher', { slug });
+      addLog('Publish', 'running', 'Publishing to GitHub...');
+      const r5 = await serverPost('/api/agents/publisher', { slug: article.slug });
       if (!r5.ok) throw new Error(r5.errors?.[0]?.error || 'Publish failed');
       addLog('Publish', 'ok', 'Live on Vercel!');
 
       setStage('done');
-      setResult({ url: r5.published?.[0]?.url, title: seo.titleTag });
+      setResult({ url: r5.published?.[0]?.url, title: article.title });
 
     } catch (err: any) {
       addLog(stage, 'error', err.message);
@@ -212,16 +98,14 @@ ${articleBody}`;
             Publish an article
           </h1>
           <p style={{ color: '#666', fontSize: 14, marginTop: 8 }}>
-            {puterReady ? 'GPT-5.4 ready — type a topic and publish' : 'Loading AI engine...'}
+            Type a topic and all 5 agents run automatically
           </p>
-          {puterReady && (
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 8,
-              background: '#0d1f0d', border: '1px solid #1a3a1a', borderRadius: 20,
-              padding: '4px 12px', fontSize: 12, color: '#4ade80' }}>
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#4ade80', display: 'inline-block' }} />
-              Free GPT-5.4 active
-            </div>
-          )}
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 8,
+            background: '#0d1f0d', border: '1px solid #1a3a1a', borderRadius: 20,
+            padding: '4px 12px', fontSize: 12, color: '#4ade80' }}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#4ade80', display: 'inline-block' }} />
+            DeepSeek V3 + DALL-E active
+          </div>
         </div>
 
         <div style={{ display: 'flex', gap: 10, marginBottom: '2rem' }}>
@@ -229,21 +113,21 @@ ${articleBody}`;
             type="text"
             value={topic}
             onChange={e => setTopic(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && !isRunning && puterReady && runPipeline()}
+            onKeyDown={e => e.key === 'Enter' && !isRunning && runPipeline()}
             placeholder="e.g. how to invest $500 a month"
-            disabled={isRunning || !puterReady}
+            disabled={isRunning}
             style={{ flex: 1, padding: '12px 16px', background: '#1a1a1a',
               border: '1px solid #2a2a2a', borderRadius: 10, color: '#fff',
               fontSize: 15, outline: 'none', fontFamily: 'inherit' }}
           />
           <button
             onClick={runPipeline}
-            disabled={isRunning || !topic.trim() || !puterReady}
+            disabled={isRunning || !topic.trim()}
             style={{ padding: '12px 22px',
-              background: isRunning || !puterReady ? '#1a1a1a' : '#fff',
-              color: isRunning || !puterReady ? '#555' : '#000',
+              background: isRunning ? '#1a1a1a' : '#fff',
+              color: isRunning ? '#555' : '#000',
               border: '1px solid #2a2a2a', borderRadius: 10, fontSize: 14,
-              fontWeight: 600, cursor: isRunning || !puterReady ? 'not-allowed' : 'pointer',
+              fontWeight: 600, cursor: isRunning ? 'not-allowed' : 'pointer',
               transition: 'all 0.15s', whiteSpace: 'nowrap', fontFamily: 'inherit' }}
           >
             {isRunning ? 'Running...' : 'Publish →'}
@@ -270,12 +154,6 @@ ${articleBody}`;
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 14, fontWeight: 600, color: '#e5e5e5' }}>
                       {s} agent
-                      {['Research', 'SEO', 'Content'].includes(s) && (
-                        <span style={{ fontSize: 10, marginLeft: 8, color: '#4ade80',
-                          background: '#0d1f0d', padding: '1px 6px', borderRadius: 10 }}>
-                          GPT-5.4
-                        </span>
-                      )}
                     </div>
                     {log && <div style={{ fontSize: 12, color: statusColor[log.status], marginTop: 2 }}>{log.message}</div>}
                   </div>
