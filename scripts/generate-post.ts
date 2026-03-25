@@ -132,6 +132,42 @@ function titleCase(value: string): string {
     .join(' ');
 }
 
+function optimizeTitle(title: string): string {
+  if (/\d+/.test(title)) return title;
+
+  return `7 Simple Ways to ${title.replace(/^(how to|ways to)/i, '').trim()} (Even If You’re Busy)`;
+}
+
+function injectHook(content: string): string {
+  const hook = `You start strong… then life gets busy, and everything falls apart.
+
+Sound familiar?
+
+`;
+
+  if (content.startsWith(hook)) return content;
+
+  return hook + content;
+}
+
+function removeDuplicateSections(content: string): string {
+  const sections = ['Recommended Tool', 'Final Thoughts', 'Call To Action'];
+  let updated = content;
+
+  for (const section of sections) {
+    const regex = new RegExp(`(## ${section}[\\s\\S]*?)(?=##|$)`, 'g');
+    const matches = [...updated.matchAll(regex)];
+
+    if (matches.length > 1) {
+      for (let i = 1; i < matches.length; i++) {
+        updated = updated.replace(matches[i][0], '');
+      }
+    }
+  }
+
+  return updated;
+}
+
 function pickTopic(topics: string[], date = new Date()): string {
   return topics[dayIndex(date) % topics.length];
 }
@@ -535,9 +571,11 @@ function ensureStandardSections(content: string, title: string, topic: string): 
   const recommendedToolBody = [
     '> This article may contain affiliate links.',
     '',
-    `A simple tool can make "${title}" easier to apply in real life. Look for something that helps you plan the work, track progress, or remove friction so the next step feels obvious.`,
+    `If you want the simplest way to apply "${title}" without overthinking, using a structured tool can make a big difference.`,
     '',
-    'Choose the lightest option you will actually use. A notes app, checklist, timer, or template is usually enough to start.',
+    `Instead of trying to plan everything yourself, the right tool helps you take action immediately and stay consistent even on busy days.`,
+    '',
+    'Look for something that reduces effort, not something that adds complexity.',
   ].join('\n');
 
   const finalThoughtsBody = [
@@ -547,9 +585,11 @@ function ensureStandardSections(content: string, title: string, topic: string): 
   ].join('\n');
 
   const callToActionBody = [
-    `What’s the biggest challenge you're facing with ${topic.toLowerCase()} right now?`,
+    `What’s the biggest challenge you're facing with "${title}" right now?`,
     '',
     'If you want the simplest way to get started without overthinking, try the tool mentioned above and test it for a few days.',
+    '',
+    'Start small — even one step this week is enough.',
     '',
     'If this helped you, save it or share it with someone who needs a simpler system.',
   ].join('\n');
@@ -569,9 +609,11 @@ function ensureReviewSections(content: string, entry: ReviewTopicEntry): string 
   ].join('\n');
 
   const callToActionBody = [
-    `What’s the biggest challenge you're facing with ${entry.reviewTitle.toLowerCase()} right now?`,
+    `What’s the biggest challenge you're facing with "${entry.reviewTitle}" right now?`,
     '',
     'If you want the simplest way to get started without overthinking, try the tool mentioned above and test it for a few days.',
+    '',
+    'Start small — even one step this week is enough.',
     '',
     'If this helped you, save it or share it with someone who needs a simpler system.',
   ].join('\n');
@@ -624,9 +666,11 @@ Good systems are boring in the best way. They are easy to start, easy to repeat,
 
 ## Call To Action
 
-What’s the biggest challenge you're facing with ${topic.toLowerCase()} right now?
+What’s the biggest challenge you're facing with "${title}" right now?
 
 If you want the simplest way to get started without overthinking, try the tool mentioned above and test it for a few days.
+
+Start small — even one step this week is enough.
 
 If this helped you, save it or share it with someone who needs a simpler system.`;
 }
@@ -659,9 +703,11 @@ function buildReviewFallbackMarkdown(entry: ReviewTopicEntry): string {
     '',
     '## Call To Action',
     '',
-    `What’s the biggest challenge you're facing with ${entry.reviewTitle.toLowerCase()} right now?`,
+    `What’s the biggest challenge you're facing with "${entry.reviewTitle}" right now?`,
     '',
     'If you want the simplest way to get started without overthinking, try the tool mentioned above and test it for a few days.',
+    '',
+    'Start small — even one step this week is enough.',
     '',
     'If this helped you, save it or share it with someone who needs a simpler system.',
   ].join('\n');
@@ -722,6 +768,7 @@ STYLE:
 - Short paragraphs
 - Simple English
 - No fluff
+- Use words like: simple, easy, realistic, works even if you're busy.
 
 Return only markdown.`
     : `Write a high-converting blog post in clean markdown.
@@ -768,6 +815,7 @@ CONVERSION RULES:
 
 - Tone & Style:
   - Avoid perfection. Focus on what works in real life for busy people.
+  - Use words like: simple, easy, realistic, works even if you're busy.
 
 - Include EXACT sentence:
 "This article may contain affiliate links."
@@ -1208,13 +1256,18 @@ async function generatePost(topic: string, dryRun: boolean, existingPosts: Exist
   const { markdown, usedFallback } = await requestMarkdown(topic, reviewMatch);
 
   const extractedTitle = extractTitle(markdown, primaryTitle);
-  const title = reviewMatch?.entry.reviewTitle || extractedTitle;
+  let title = reviewMatch?.entry.reviewTitle || extractedTitle;
+  title = optimizeTitle(title);
   const baseContent =
     cleanContent(markdown, extractedTitle) ||
     cleanContent(buildFallbackMarkdown(topic, reviewMatch), title);
-  const cleanedContent = reviewMatch
+  
+  let cleanedContent = reviewMatch
     ? ensureReviewSections(baseContent, reviewMatch.entry)
     : ensureStandardSections(baseContent, title, topic);
+  
+  cleanedContent = injectHook(cleanedContent);
+  cleanedContent = removeDuplicateSections(cleanedContent);
   const keyword = reviewMatch?.entry.reviewTitle || titleCase(topic);
   const tags = getTags(title, keyword, cleanedContent);
   const description = extractDescription(cleanedContent);
