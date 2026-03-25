@@ -43,5 +43,23 @@
     "clusterKey": "budgeting-and-money",
     "usedFallback": false,
     "generatedAt": "2026-03-25T12:28:31.439Z"
+  },
+  {
+    "topic": "How to build a realistic workout week when time is tight",
+    "title": "How to Build a Realistic Workout Week When Time is Tight",
+    "slug": "how-to-build-a-realistic-workout-week-when-time-is-tight",
+    "filePath": "c:\\Users\\USER\\Documents\\ai-blog\\posts\\how-to-build-a-realistic-workout-week-when-time-is-tight.mdx",
+    "clusterKey": "fitness-consistency",
+    "usedFallback": false,
+    "generatedAt": "2026-03-25T12:41:34.611Z"
+  },
+  {
+    "topic": "How to stay consistent with exercise on a busy schedule",
+    "title": "**Staying Consistent with Exercise on a Busy Schedule**",
+    "slug": "how-to-stay-consistent-with-exercise-on-a-busy-schedule",
+    "filePath": "C:\\Users\\USER\\Documents\\ai-blog\\posts\\how-to-stay-consistent-with-exercise-on-a-busy-schedule.mdx",
+    "clusterKey": "fitness-consistency",
+    "usedFallback": false,
+    "generatedAt": "2026-03-25T12:45:56.581Z"
   }
 ]

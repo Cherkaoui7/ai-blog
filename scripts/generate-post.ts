@@ -547,9 +547,11 @@ function ensureStandardSections(content: string, title: string, topic: string): 
   ].join('\n');
 
   const callToActionBody = [
-    `What part of "${title}" feels most useful for you right now?`,
+    `What’s the biggest challenge you're facing with ${topic.toLowerCase()} right now?`,
     '',
-    'Pick one step to try this week, then save or share this article with someone who would benefit from the same plan.',
+    'Start with one small step today, and if you want a faster way to stay consistent, try the tool mentioned above.',
+    '',
+    'If this helped you, save it or share it with someone working on the same goal.',
   ].join('\n');
 
   let normalized = ensureSection(content, 'Recommended Tool', recommendedToolBody);
@@ -567,9 +569,11 @@ function ensureReviewSections(content: string, entry: ReviewTopicEntry): string 
   ].join('\n');
 
   const callToActionBody = [
-    `Which option in "${entry.reviewTitle}" feels closest to what you need right now?`,
+    `What’s the biggest challenge you're facing with ${entry.reviewTitle.toLowerCase()} right now?`,
     '',
-    'Pick one product to test this week, then save or share this review with someone who is trying to make the same money decision.',
+    'Start with one small step today, and if you want a faster way to stay consistent, try the tool mentioned above.',
+    '',
+    'If this helped you, save it or share it with someone working on the same goal.',
   ].join('\n');
 
   let normalized = ensureSection(content, 'Quick Comparison Table', stripSectionHeading(buildQuickComparisonTable(entry)));
@@ -598,11 +602,11 @@ That creates a familiar pattern: good intentions at the start, inconsistency in 
 
 ## The Solution
 
-A better approach is to lower friction and make the first action obvious. You do not need a perfect system. You need a small process you can repeat even on a busy day.
+A better approach is to lower friction and make the first action obvious. You do not need a perfect system. You need a simple process you can repeat—one that works even if you're busy.
 
-- Start with one small action you can repeat this week.
+- Set an easy to start baseline you can hit this week.
 - Measure progress in a simple way.
-- Remove one obstacle that makes follow-through harder.
+- Make the target realistic so follow-through is guaranteed.
 
 ## How to Make It Stick
 
@@ -620,18 +624,20 @@ Good systems are boring in the best way. They are easy to start, easy to repeat,
 
 ## Call To Action
 
-What is one change you can test this week?
+What’s the biggest challenge you're facing with ${topic.toLowerCase()} right now?
 
-Start there, keep it simple, and share this article with someone who is working on the same challenge.`;
+Start with one small step today, and if you want a faster way to stay consistent, try the tool mentioned above.
+
+If this helped you, save it or share it with someone working on the same goal.`;
 }
 
 function buildReviewFallbackMarkdown(entry: ReviewTopicEntry): string {
   return [
     `# ${entry.reviewTitle}`,
     '',
-    `The right ${entry.comparisonLabel} can make a tight budget easier to manage because the best option removes friction instead of adding another task to your week.`,
+    `The right ${entry.comparisonLabel} can make a real difference because it removes friction instead of adding another task to your week.`,
     '',
-    'This review compares practical picks for readers who want something useful, realistic, and worth testing in everyday life.',
+    'This review compares practical picks for readers who want something simple, realistic, and entirely easy to start, which works even if you’re busy.',
     '',
     buildQuickComparisonTable(entry),
     '',
@@ -639,7 +645,7 @@ function buildReviewFallbackMarkdown(entry: ReviewTopicEntry): string {
     '',
     '## How to Choose the Right Pick',
     '',
-    'Start with the one job you need the tool to do well. Some readers need stronger budget structure, others need better bill visibility, and some just need a system they will actually maintain.',
+    'Start with the one job you need the tool to do well. Some readers need stronger structure, others need better visibility, and some just need a system they will actually maintain.',
     '',
     'A longer feature list does not help if the workflow feels too heavy by week two. The better choice is usually the product you can stick with consistently.',
     '',
@@ -653,7 +659,11 @@ function buildReviewFallbackMarkdown(entry: ReviewTopicEntry): string {
     '',
     '## Call To Action',
     '',
-    `Which product from "${entry.reviewTitle}" looks closest to what you need right now? Save this guide and share it with someone who is comparing the same kind of tool.`,
+    `What’s the biggest challenge you're facing with ${entry.reviewTitle.toLowerCase()} right now?`,
+    '',
+    'Start with one small step today, and if you want a faster way to stay consistent, try the tool mentioned above.',
+    '',
+    'If this helped you, save it or share it with someone working on the same goal.',
   ].join('\n');
 }
 
@@ -666,65 +676,94 @@ async function requestMarkdown(
   reviewMatch: ReviewMatch | null
 ): Promise<{ markdown: string; usedFallback: boolean }> {
   const prompt = reviewMatch
-    ? `Write a trustworthy product review list article in clean MDX-compatible markdown.
+    ? `Write a high-converting product comparison article.
 
 Topic: ${topic}
-Article title: ${reviewMatch.entry.reviewTitle}
-Products to cover exactly:
+Title: ${reviewMatch.entry.reviewTitle}
+
+Products:
 ${buildPromptProductList(reviewMatch.entry)}
 
-Structure:
-- Start with the H1 title: ${reviewMatch.entry.reviewTitle}
-- Open with a short hook for readers comparing options.
-- Explain how to choose in this category without sounding hypey.
-- Include these exact H2 sections:
-  - ## Quick Comparison Table
-  - ## Best Overall
-  - ## Pros and Cons
-  - ## Final Recommendation
-  - ## Final Thoughts
-  - ## Call To Action
-- Under Pros and Cons, use ### headings for each product.
+GOAL:
+Help the reader choose the best product and take action.
 
-Rules:
-- Mention each product by its exact name.
-- Use markdown table syntax in Quick Comparison Table.
-- Keep the tone natural, balanced, and useful.
-- Use short paragraphs with 1 to 3 sentences each.
-- Include the exact sentence: "This article may contain affiliate links."
-- Make one clear recommendation and explain the tradeoffs honestly.
-- Do not invent prices, testing claims, or exaggerated promises.
-- No HTML, no JSX, no code fences.
-- Do not output frontmatter, notes, or explanations.
+STRUCTURE:
 
-Return only the markdown article.`
-    : `Write a search-friendly, conversion-focused blog post in clean MDX-compatible markdown.
+- Hook (reader is confused between options)
+- Quick explanation of the problem
+- ## Quick Comparison Table
+- ## Best Overall (clear winner + why)
+- ## Pros and Cons (honest)
+- ## Who Each Product Is For
+- ## Final Recommendation
+- ## Final Thoughts
+- ## Call To Action
+
+CONVERSION RULES:
+
+- Be honest (no fake hype)
+- Show tradeoffs
+- Help reader decide FAST
+- Mention real usage situations
+- Reduce decision friction
+
+- Include EXACT sentence:
+"This article may contain affiliate links."
+
+- Make recommendation clear
+
+STYLE:
+
+- Human tone
+- Short paragraphs
+- Simple English
+- No fluff
+
+Return only markdown.`
+    : `Write a high-converting blog post in clean markdown.
 
 Topic: ${topic}
 
-Structure:
-- Start with a single H1 title.
-- Open with a short hook that makes the reader care immediately.
-- Show the real problem or friction the reader is facing.
-- Walk through the solution with practical steps, examples, and advice.
-- End with these exact H2 sections:
-  - ## Recommended Tool
-  - ## Final Thoughts
-  - ## Call To Action
+GOAL:
+Help the reader solve a real problem and guide them toward using a tool or product.
 
-Rules:
-- Use clear H2 sections.
-- Keep the tone practical, natural, and trustworthy.
-- No HTML, no JSX, no code fences.
-- Use short paragraphs with 1 to 3 sentences each.
-- Include at least one bullet list where it helps readability.
-- Include the exact sentence: "This article may contain affiliate links."
-- In the Recommended Tool section, recommend one relevant tool or resource in a helpful, non-pushy way.
-- In the Call To Action section, ask at least one direct question and encourage the reader to take one small step or share the article.
-- Aim for 700 to 1100 words.
-- Do not mention that you are an AI.
-- Avoid hype, fake urgency, exaggerated claims, or spammy sales language.
-- Do not output frontmatter, SEO labels, notes, or explanations.
+STRUCTURE:
+
+1. Strong Hook (relatable pain or frustration)
+2. Problem Section (why most people fail)
+3. Solution Section (simple explanation)
+4. Actionable Steps (clear and practical)
+5. Real Use Case or Example
+6. ## Recommended Tool (VERY IMPORTANT)
+7. ## Final Thoughts
+8. ## Call To Action
+
+RULES:
+
+- Write like a human (simple, clear, natural tone)
+- Short paragraphs (1–3 lines)
+- Use bullet points where useful
+- Focus on real-life situations
+- Make the reader feel understood
+- Do NOT sound like AI or generic advice
+
+CONVERSION RULES:
+
+- In "Recommended Tool":
+  - Introduce ONE tool naturally
+  - Explain WHY it helps (not features, but outcomes)
+  - Keep it honest (no hype)
+
+- In CTA:
+  - Ask a direct question
+  - Encourage one small action
+  - Encourage sharing or saving
+
+- Include EXACT sentence:
+"This article may contain affiliate links."
+
+- No HTML, no JSX, no code blocks
+- 800–1200 words
 
 Return only the markdown article.`;
 
