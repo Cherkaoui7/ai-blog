@@ -1,0 +1,74 @@
+{
+  "productivity-habits": {
+    "label": "Productivity Habits",
+    "keywords": ["habits", "work from home", "routine", "consistency", "productivity"],
+    "topics": [
+      "How to build better habits when you work from home",
+      "How to design a weekly routine that actually sticks",
+      "Daily systems that make remote work less chaotic"
+    ]
+  },
+  "workflow-automation": {
+    "label": "Workflow Automation",
+    "keywords": ["automation", "workflow", "small teams", "operations", "efficiency"],
+    "topics": [
+      "What small teams should automate first in their workflow",
+      "Simple automations that remove repetitive admin work",
+      "How to document repeatable processes before automating them"
+    ]
+  },
+  "budgeting-and-money": {
+    "label": "Budgeting and Money",
+    "keywords": ["budgeting", "saving money", "irregular income", "expenses", "personal finance"],
+    "topics": [
+      "Beginner guide to budgeting when income changes every month",
+      "How to save money on a low income without burning out",
+      "Best apps to track bills and recurring expenses"
+    ]
+  },
+  "fitness-consistency": {
+    "label": "Fitness Consistency",
+    "keywords": ["exercise", "busy schedule", "fitness", "consistency", "workout"],
+    "topics": [
+      "How to stay consistent with exercise on a busy schedule",
+      "How to build a realistic workout week when time is tight",
+      "Simple ways to keep a home workout plan from falling apart"
+    ]
+  },
+  "learning-systems": {
+    "label": "Learning Systems",
+    "keywords": ["learn faster", "study", "burnout", "skills", "retention"],
+    "topics": [
+      "Simple ways to learn faster without burning out",
+      "How to study consistently when your schedule keeps changing",
+      "How to build a repeatable learning system for one new skill"
+    ]
+  },
+  "ai-and-creators": {
+    "label": "AI and Creators",
+    "keywords": ["ai tools", "creators", "solo creators", "content systems", "automation"],
+    "topics": [
+      "What AI tools actually save time for solo creators",
+      "AI workflows that help creators publish more consistently",
+      "How to build a simple AI tool stack without overcomplicating it"
+    ]
+  },
+  "meal-planning": {
+    "label": "Meal Planning",
+    "keywords": ["meal planning", "overspending", "groceries", "budget meals", "meal prep"],
+    "topics": [
+      "How to plan weekly meals without overspending",
+      "How to cut grocery waste with a simple meal-prep system",
+      "Cheap meal planning habits that still save time"
+    ]
+  },
+  "focus-management": {
+    "label": "Focus Management",
+    "keywords": ["focus", "notifications", "deep work", "attention", "distraction"],
+    "topics": [
+      "How to protect focus in a world of constant notifications",
+      "A simple deep-work routine for distracted afternoons",
+      "How to reduce digital distractions without deleting everything"
+    ]
+  }
+}

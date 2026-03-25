@@ -1,6 +1,6 @@
 const withMDX = require('@next/mdx')({
   extension: /\.mdx?$/,
-  options: { remarkPlugins: [], rehypePlugins: [] },
+  options: { remarkPlugins: ['remark-gfm'], rehypePlugins: [] },
 });
 
 module.exports = withMDX({

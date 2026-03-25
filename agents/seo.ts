@@ -1,4 +1,5 @@
 import { askOpenRouter } from '@/lib/openrouter';
+import { buildPromptProductList, getReviewMatch } from '@/lib/reviews';
 
 export type SEOBrief = {
   topic: string;
@@ -29,7 +30,36 @@ function fixEncoding(str: string): string {
 }
 
 async function generateSEOBrief(topic: string, contentAngle: string): Promise<SEOBrief> {
-  const prompt = `You are an expert SEO strategist. Generate a complete SEO brief for this blog article.
+  const reviewMatch = getReviewMatch(topic, contentAngle);
+  const prompt = reviewMatch
+    ? `You are an expert SEO strategist for affiliate review content. Generate a complete SEO brief for this product review article.
+
+Topic: "${topic}"
+Content angle: "${contentAngle}"
+Review direction: "${reviewMatch.entry.reviewTitle}"
+Products to compare:
+${buildPromptProductList(reviewMatch.entry)}
+
+Rules:
+- primaryKeyword: exact commercial-intent phrase people type in Google (4-8 words)
+- secondaryKeywords: 5 related terms to naturally include
+- titleTag: max 60 characters, start with "Best", include the comparison angle
+- metaDescription: max 155 characters, mention comparison value and the reader outcome
+- h2Tags: exactly 6 H2 headings and they must include "Quick Comparison Table", "Best Overall", "Pros and Cons", and "Final Recommendation"
+- targetWordCount: between 1700 and 2600
+- competition: "low" if long-tail specific, "medium" if moderate, "high" if broad
+
+Respond ONLY with valid JSON, no markdown:
+{
+  "primaryKeyword": "...",
+  "secondaryKeywords": ["...", "...", "...", "...", "..."],
+  "titleTag": "...",
+  "metaDescription": "...",
+  "h2Tags": ["...", "...", "...", "...", "...", "..."],
+  "targetWordCount": 2000,
+  "competition": "medium"
+}`
+    : `You are an expert SEO strategist. Generate a complete SEO brief for this blog article.
 
 Topic: "${topic}"
 Content angle: "${contentAngle}"
@@ -64,14 +94,26 @@ Respond ONLY with valid JSON, no markdown:
     throw new Error(`Failed to parse SEO brief for: ${topic}`);
   }
 
+  const h2Tags = Array.isArray(parsed.h2Tags) ? parsed.h2Tags.map(fixEncoding) : [];
+  const reviewH2Fallback = [
+    'Quick Comparison Table',
+    'Best Overall',
+    'Pros and Cons',
+    'Who Each Pick Is Best For',
+    'How to Choose',
+    'Final Recommendation',
+  ];
+
   return {
     topic: fixEncoding(topic),
-    primaryKeyword: fixEncoding(parsed.primaryKeyword),
-    secondaryKeywords: parsed.secondaryKeywords.map(fixEncoding),
-    titleTag: fixEncoding(parsed.titleTag),
-    metaDescription: fixEncoding(parsed.metaDescription),
-    h2Tags: parsed.h2Tags.map(fixEncoding),
-    targetWordCount: parsed.targetWordCount,
+    primaryKeyword: fixEncoding(parsed.primaryKeyword || reviewMatch?.entry.reviewTitle || topic),
+    secondaryKeywords: Array.isArray(parsed.secondaryKeywords)
+      ? parsed.secondaryKeywords.map(fixEncoding)
+      : [],
+    titleTag: fixEncoding(parsed.titleTag || reviewMatch?.entry.reviewTitle || topic),
+    metaDescription: fixEncoding(parsed.metaDescription || `${reviewMatch?.entry.reviewTitle || topic} compared with practical recommendations.`),
+    h2Tags: reviewMatch && h2Tags.length !== 6 ? reviewH2Fallback : h2Tags,
+    targetWordCount: Number(parsed.targetWordCount) || (reviewMatch ? 2000 : 1800),
     competition: parsed.competition,
     slug: toSlug(parsed.primaryKeyword || topic),
   };

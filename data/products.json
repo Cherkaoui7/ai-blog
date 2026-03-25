@@ -1,0 +1,227 @@
+{
+  "budgeting for irregular income": {
+    "keywords": [
+      "budgeting",
+      "irregular income",
+      "income changes every month",
+      "variable income",
+      "save money",
+      "low income"
+    ],
+    "reviewTitle": "Best Budgeting Apps for Irregular Income",
+    "comparisonLabel": "budgeting apps",
+    "bestOverall": "Monarch Money",
+    "products": [
+      {
+        "name": "Monarch Money",
+        "description": "Flexible budgeting app that supports category budgets and a flex-budgeting approach for uneven monthly spending.",
+        "affiliateLink": "https://www.monarchmoney.com/?via=YOUR_AFFILIATE_ID",
+        "bestFor": "households that want flexibility without losing visibility",
+        "pros": [
+          "Flexible budgeting fits variable monthly expenses",
+          "Strong account aggregation and cash-flow visibility",
+          "Custom categories help tailor the budget to real life"
+        ],
+        "cons": [
+          "Paid subscription",
+          "Can feel heavier than a simple spreadsheet for very small budgets"
+        ]
+      },
+      {
+        "name": "YNAB",
+        "description": "Zero-based budgeting app built around assigning every dollar a job and planning before you spend.",
+        "affiliateLink": "https://www.ynab.com/?via=YOUR_AFFILIATE_ID",
+        "bestFor": "people who want a hands-on budgeting method",
+        "pros": [
+          "Strong zero-based workflow",
+          "Helpful for planning ahead when paychecks vary",
+          "Good educational support for budgeting habits"
+        ],
+        "cons": [
+          "Learning curve is higher than lighter apps",
+          "Paid subscription"
+        ]
+      },
+      {
+        "name": "EveryDollar",
+        "description": "Zero-based budget app from Ramsey with manual budgeting on the free tier and automatic transaction import on premium plans.",
+        "affiliateLink": "https://www.ramseysolutions.com/ramseyplus/everydollar?via=YOUR_AFFILIATE_ID",
+        "bestFor": "budgeters who want a simple zero-based setup",
+        "pros": [
+          "Straightforward interface",
+          "Free tier is enough for manual budgeting",
+          "Paycheck planning fits people who budget around payday"
+        ],
+        "cons": [
+          "Manual entry can take discipline on the free plan",
+          "Less flexible for people who want deeper customization"
+        ]
+      },
+      {
+        "name": "Goodbudget",
+        "description": "Envelope-style budgeting app designed to help households plan spending categories and share budgets.",
+        "affiliateLink": "https://goodbudget.com/?via=YOUR_AFFILIATE_ID",
+        "bestFor": "people who like envelope budgeting and shared household planning",
+        "pros": [
+          "Envelope approach is easy to understand",
+          "Good for shared budgets",
+          "Keeps the focus on planned spending"
+        ],
+        "cons": [
+          "Less automation than bank-linked competitors",
+          "May feel basic for users who want deeper analytics"
+        ]
+      }
+    ]
+  },
+  "saving money on low income": {
+    "keywords": [
+      "saving money",
+      "low income",
+      "budget planner",
+      "cut expenses",
+      "monthly expenses",
+      "tight budget"
+    ],
+    "reviewTitle": "Best Tools to Save Money on a Low Income",
+    "comparisonLabel": "money-saving tools",
+    "bestOverall": "Rocket Money",
+    "products": [
+      {
+        "name": "Rocket Money",
+        "description": "Budgeting and subscription-tracking app with spend tracking, bill negotiation, and subscription cancellation tools.",
+        "affiliateLink": "https://www.rocketmoney.com/?affiliate=YOUR_AFFILIATE_ID",
+        "bestFor": "people who need help spotting waste and reducing recurring bills",
+        "pros": [
+          "Strong subscription tracking",
+          "Bill negotiation can surface fast wins",
+          "Budget and spend tracking are easy to understand"
+        ],
+        "cons": [
+          "Best features require premium",
+          "Less hands-on for people who prefer manual planning"
+        ]
+      },
+      {
+        "name": "PocketGuard",
+        "description": "Budgeting app focused on showing how much you have left to spend after bills, goals, and recurring expenses.",
+        "affiliateLink": "https://pocketguard.com/?via=YOUR_AFFILIATE_ID",
+        "bestFor": "people who want a quick left-to-spend number",
+        "pros": [
+          "Simple view of available spending money",
+          "Tracks recurring payments and subscriptions",
+          "Helpful for staying within a tight monthly limit"
+        ],
+        "cons": [
+          "Paid plan for full feature set",
+          "Less method-driven than zero-based tools"
+        ]
+      },
+      {
+        "name": "Goodbudget",
+        "description": "Envelope budget app that helps you divide income into clear spending buckets before the month gets away from you.",
+        "affiliateLink": "https://goodbudget.com/?via=YOUR_AFFILIATE_ID",
+        "bestFor": "people who want to separate needs, wants, and savings manually",
+        "pros": [
+          "Envelope system is practical for tight budgets",
+          "Keeps spending categories visible",
+          "Useful for couples and families sharing one budget"
+        ],
+        "cons": [
+          "Requires more manual upkeep",
+          "Not as automated as bank-connected alternatives"
+        ]
+      },
+      {
+        "name": "Budget Planner",
+        "description": "Simple paper or printable budget planner for people who want a low-tech way to map bills, savings, and weekly spending.",
+        "affiliateLink": "https://www.amazon.com/s?k=budget+planner&tag=YOURAFFILIATETAG-20",
+        "bestFor": "people who prefer writing everything down by hand",
+        "pros": [
+          "Low cost and easy to start",
+          "No app accounts or data connections required",
+          "Useful for weekly check-ins and bill planning"
+        ],
+        "cons": [
+          "No automation",
+          "Takes discipline to update consistently"
+        ]
+      }
+    ]
+  },
+  "tracking bills and recurring expenses": {
+    "keywords": [
+      "bills",
+      "recurring expenses",
+      "subscription tracking",
+      "monthly bills",
+      "expense tracking",
+      "bill organizer"
+    ],
+    "reviewTitle": "Best Apps to Track Bills and Recurring Expenses",
+    "comparisonLabel": "bill-tracking apps",
+    "bestOverall": "Rocket Money",
+    "products": [
+      {
+        "name": "Rocket Money",
+        "description": "Tracks subscriptions, recurring bills, and spending trends while offering bill negotiation and cancellation help.",
+        "affiliateLink": "https://www.rocketmoney.com/?affiliate=YOUR_AFFILIATE_ID",
+        "bestFor": "people who want bill tracking plus cancellation help",
+        "pros": [
+          "Strong recurring charge detection",
+          "Bill negotiation adds extra value",
+          "Useful for cutting waste quickly"
+        ],
+        "cons": [
+          "Premium unlocks the strongest features",
+          "Some users may want more manual budgeting controls"
+        ]
+      },
+      {
+        "name": "PocketGuard",
+        "description": "Budget app with recurring payment tracking, category spending, and a clear view of leftover money after key expenses.",
+        "affiliateLink": "https://pocketguard.com/?via=YOUR_AFFILIATE_ID",
+        "bestFor": "people who want bill visibility and spending guardrails together",
+        "pros": [
+          "Recurring payment tracking is built in",
+          "Simple dashboard reduces friction",
+          "Good for people who need one number to manage"
+        ],
+        "cons": [
+          "Premium model may not fit every budget",
+          "Less detailed planning than spreadsheet-heavy workflows"
+        ]
+      },
+      {
+        "name": "EveryDollar",
+        "description": "Zero-based budgeting app with paycheck planning that can help users line up bills against when income actually arrives.",
+        "affiliateLink": "https://www.ramseysolutions.com/ramseyplus/everydollar?via=YOUR_AFFILIATE_ID",
+        "bestFor": "people who want to plan bills around payday",
+        "pros": [
+          "Paycheck planning can reduce timing stress",
+          "Clean zero-based setup",
+          "Works well for manual budget reviews"
+        ],
+        "cons": [
+          "Manual updates take effort on the free plan",
+          "Less focused on bill negotiation or subscription cleanup"
+        ]
+      },
+      {
+        "name": "Bill Organizer Planner",
+        "description": "Paper planner that gives a simple place to track due dates, amounts, and payment status without relying on an app.",
+        "affiliateLink": "https://www.amazon.com/s?k=bill+organizer+planner&tag=YOURAFFILIATETAG-20",
+        "bestFor": "people who want an offline bill checklist",
+        "pros": [
+          "Very simple and low cost",
+          "Works without bank connections",
+          "Good for a weekly bill-pay routine"
+        ],
+        "cons": [
+          "No automatic reminders unless you add them yourself",
+          "No transaction import or analytics"
+        ]
+      }
+    ]
+  }
+}

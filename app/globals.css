@@ -74,6 +74,132 @@ body {
 a { color: inherit; text-decoration: none; }
 img { max-width: 100%; display: block; }
 
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.email-capture {
+  padding: 1.5rem;
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  background:
+    linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(15, 23, 42, 0.02)),
+    var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.email-capture__content {
+  margin-bottom: 1rem;
+}
+
+.email-capture__eyebrow {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #1d4ed8;
+  margin-bottom: 0.5rem;
+}
+
+.email-capture__title {
+  font-size: 1.5rem;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+  margin-bottom: 0.5rem;
+}
+
+.email-capture__copy {
+  color: var(--muted-foreground);
+  max-width: 48ch;
+}
+
+.email-capture__form {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.email-capture__fields {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.email-capture__input {
+  width: 100%;
+  min-height: 50px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  padding: 0 1rem;
+  color: var(--text);
+  font: inherit;
+}
+
+.email-capture__input::placeholder {
+  color: var(--muted-foreground);
+}
+
+.email-capture__button {
+  min-height: 50px;
+  border: 0;
+  border-radius: 999px;
+  background: #111827;
+  color: #f8fafc;
+  font: inherit;
+  font-weight: 700;
+  padding: 0 1.25rem;
+  cursor: pointer;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.email-capture__button:hover:not(:disabled) {
+  opacity: 0.92;
+}
+
+.email-capture__button:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.email-capture__fine-print {
+  font-size: 0.85rem;
+  color: var(--muted-foreground);
+}
+
+.email-capture__message {
+  font-size: 0.9rem;
+}
+
+.email-capture__message--success {
+  color: #047857;
+}
+
+.email-capture__message--error {
+  color: #b91c1c;
+}
+
+@media (min-width: 700px) {
+  .email-capture {
+    padding: 1.75rem;
+  }
+
+  .email-capture__fields {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+
+  .email-capture__button {
+    min-width: 180px;
+  }
+}
+
 /* Prose styles for blog posts */
 .prose h1 { font-size: 2rem; font-weight: 700; line-height: 1.2; margin: 2rem 0 1rem; }
 .prose h2 { font-size: 1.4rem; font-weight: 600; margin: 2rem 0 0.75rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }

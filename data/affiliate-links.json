@@ -1,0 +1,97 @@
+{
+  "workflow automation": {
+    "url": "https://zapier.com/?utm_source=YOUR_AFFILIATE_ID",
+    "label": "workflow automation tool",
+    "aliases": ["automation tool", "small teams automate", "team workflow"]
+  },
+  "budgeting app for low income": {
+    "url": "https://www.amazon.com/s?k=budget+planner&tag=YOURAFFILIATETAG-20",
+    "label": "budget planner",
+    "aliases": ["budget planner", "budgeting app", "low income budget"]
+  },
+  "habit tracker": {
+    "url": "https://www.amazon.com/s?k=habit+tracker&tag=YOURAFFILIATETAG-20",
+    "label": "habit tracker",
+    "aliases": ["habit tracking", "tracker", "daily habits"]
+  },
+  "focus timer": {
+    "url": "https://www.amazon.com/s?k=focus+timer&tag=YOURAFFILIATETAG-20",
+    "label": "focus timer",
+    "aliases": ["productivity timer", "pomodoro timer", "focus"]
+  },
+  "meal planner": {
+    "url": "https://www.amazon.com/s?k=meal+planner&tag=YOURAFFILIATETAG-20",
+    "label": "meal planner",
+    "aliases": ["meal planning", "weekly meals", "meal prep"]
+  },
+  "learning platform": {
+    "url": "https://www.skillshare.com/?coupon=YOUR_AFFILIATE_ID",
+    "label": "online learning platform",
+    "aliases": ["learn faster", "online course", "course platform"]
+  },
+  "home workout app": {
+    "url": "https://www.amazon.com/s?k=home+fitness+equipment&tag=YOURAFFILIATETAG-20",
+    "label": "home workout gear",
+    "aliases": ["exercise", "busy schedule workout", "fitness tool"]
+  },
+  "book": {
+    "url": "https://www.amazon.com/s?k=personal+development+books&tag=YOURAFFILIATETAG-20",
+    "label": "personal development books",
+    "aliases": ["books", "reading", "non-fiction book"]
+  },
+  "visual studio code": {
+    "url": "https://code.visualstudio.com/",
+    "label": "Visual Studio Code",
+    "aliases": ["vs code", "code editor", "developer tools"]
+  },
+  "github desktop": {
+    "url": "https://desktop.github.com/",
+    "label": "GitHub Desktop",
+    "aliases": ["github", "version control", "git tool"]
+  },
+  "blood pressure monitor": {
+    "url": "https://www.amazon.com/s?k=blood+pressure+monitor&tag=YOURAFFILIATETAG-20",
+    "label": "blood pressure monitor",
+    "aliases": ["blood pressure cuff", "home blood pressure"]
+  },
+  "weekly pill organizer": {
+    "url": "https://www.amazon.com/s?k=weekly+pill+organizer&tag=YOURAFFILIATETAG-20",
+    "label": "weekly pill organizer",
+    "aliases": ["pill organizer", "medication organizer"]
+  },
+  "glucometer": {
+    "url": "https://www.amazon.com/s?k=glucometer&tag=YOURAFFILIATETAG-20",
+    "label": "glucometer",
+    "aliases": ["glucose monitor", "blood sugar monitor"]
+  },
+  "adjustable dumbbells": {
+    "url": "https://www.amazon.com/s?k=adjustable+dumbbells&tag=YOURAFFILIATETAG-20",
+    "label": "adjustable dumbbells",
+    "aliases": ["dumbbells", "strength training", "home gym"]
+  },
+  "resistance bands": {
+    "url": "https://www.amazon.com/s?k=resistance+bands&tag=YOURAFFILIATETAG-20",
+    "label": "resistance bands",
+    "aliases": ["bands", "training bands"]
+  },
+  "foam roller": {
+    "url": "https://www.amazon.com/s?k=foam+roller&tag=YOURAFFILIATETAG-20",
+    "label": "foam roller",
+    "aliases": ["recovery tool", "mobility tool"]
+  },
+  "parental control app": {
+    "url": "https://www.amazon.com/s?k=parental+control+device&tag=YOURAFFILIATETAG-20",
+    "label": "parental control tools",
+    "aliases": ["screen time control", "family safety app"]
+  },
+  "online therapy platform for teens": {
+    "url": "https://www.betterhelp.com/?affiliate=YOUR_AFFILIATE_ID",
+    "label": "online therapy platform",
+    "aliases": ["therapy platform", "teen therapy", "mental health support"]
+  },
+  "mindfulness app for teens": {
+    "url": "https://www.amazon.com/s?k=mindfulness+journal+for+teens&tag=YOURAFFILIATETAG-20",
+    "label": "mindfulness resources for teens",
+    "aliases": ["mindfulness app", "teen mindfulness", "mindfulness journal"]
+  }
+}
