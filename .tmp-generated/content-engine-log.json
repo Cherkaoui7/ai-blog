@@ -25,5 +25,23 @@
     "clusterKey": "workflow-automation",
     "usedFallback": true,
     "generatedAt": "2026-03-25T12:13:10.216Z"
+  },
+  {
+    "topic": "Beginner guide to budgeting when income changes every month",
+    "title": "Best Budgeting Apps for Irregular Income",
+    "slug": "best-budgeting-apps-for-irregular-income",
+    "filePath": "c:\\Users\\USER\\Documents\\ai-blog\\posts\\best-budgeting-apps-for-irregular-income.mdx",
+    "clusterKey": "budgeting-and-money",
+    "usedFallback": false,
+    "generatedAt": "2026-03-25T12:25:58.626Z"
+  },
+  {
+    "topic": "Best apps to track bills and recurring expenses",
+    "title": "Best Apps to Track Bills and Recurring Expenses",
+    "slug": "best-apps-to-track-bills-and-recurring-expenses",
+    "filePath": "C:\\Users\\USER\\Documents\\ai-blog\\posts\\best-apps-to-track-bills-and-recurring-expenses.mdx",
+    "clusterKey": "budgeting-and-money",
+    "usedFallback": false,
+    "generatedAt": "2026-03-25T12:28:31.439Z"
   }
 ]

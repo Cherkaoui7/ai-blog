@@ -19,5 +19,19 @@
     "clusterKey": "workflow-automation",
     "lastGeneratedAt": "2026-03-25T12:13:10.216Z",
     "lastSlug": "what-small-teams-should-automate-first-in-their-workflow"
+  },
+  "beginner guide to budgeting when income changes every month": {
+    "topic": "Beginner guide to budgeting when income changes every month",
+    "count": 1,
+    "clusterKey": "budgeting-and-money",
+    "lastGeneratedAt": "2026-03-25T12:25:58.626Z",
+    "lastSlug": "best-budgeting-apps-for-irregular-income"
+  },
+  "best apps to track bills and recurring expenses": {
+    "topic": "Best apps to track bills and recurring expenses",
+    "count": 1,
+    "clusterKey": "budgeting-and-money",
+    "lastGeneratedAt": "2026-03-25T12:28:31.439Z",
+    "lastSlug": "best-apps-to-track-bills-and-recurring-expenses"
   }
 }

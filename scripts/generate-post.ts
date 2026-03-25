@@ -737,11 +737,11 @@ Return only the markdown article.`;
         prompt,
         stream: false,
       }),
-      signal: AbortSignal.timeout(90_000),
     });
 
     if (!response.ok) {
-      throw new Error(`Ollama returned ${response.status}`);
+      const errText = await response.text();
+      throw new Error(`Ollama error ${response.status}: ${errText}`);
     }
 
     const data = await response.json() as OllamaGenerateResponse;
@@ -754,7 +754,7 @@ Return only the markdown article.`;
     return { markdown, usedFallback: false };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    console.warn(`[generate-post] Ollama failed: ${message}. Using fallback content.`);
+    console.error(`❌ OLLAMA FAILED:\n${message}`);
     return { markdown: buildFallbackMarkdown(topic, reviewMatch), usedFallback: true };
   }
 }
