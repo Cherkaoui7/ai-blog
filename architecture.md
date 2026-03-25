@@ -1,133 +1,130 @@
-# AI Blog - Project Architecture and Structure
+# AI Blog Architecture
 
-This document outlines the architecture and file structure of the `ai-blog` project.
+## Summary
 
-## High-Level Architecture
+This project is now a local-first MDX blog system.
 
-The project is a Next.js web application utilizing the **App Router** paradigm. It integrates **Supabase** for database and authentication, and **Google Gemini AI** for managing AI agents that assist in researching, writing, and optimizing blog content. 
+- Next.js 16 / React 19 frontend
+- Local Ollama generation through `scripts/generate-post.ts`
+- MDX posts stored in `posts/`
+- Public blog pages rendered from local files
+- Admin and pipeline pages kept as UI, but disconnected from content generation
+- Optional GitHub push after local generation
 
-### Core Technologies
-- **Framework:** Next.js 16 / React 19
-- **Database / Auth:** Supabase (`@supabase/ssr`, `@supabase/supabase-js`)
-- **AI Integration:** Google Generative AI (`@google/generative-ai`)
-- **Styling / UI:** Tailwind CSS, Shadcn UI (`radix-ui`), Lucide React
-- **Content Rendering:** MDX (`@next/mdx`, `next-mdx-remote`)
-- **Data Scraping / Research:** `axios`, `cheerio`
+There is no paid AI dependency in the generation path.
 
----
+## Core flow
 
-## Directory Structure Overview
+1. `scripts/generate-post.ts` selects topics, calls Ollama, applies fallback content if needed, injects SEO/internal links/monetization structure, and writes MDX into `posts/`.
+2. The script records generation logs in `.tmp-generated/`.
+3. `lib/posts.ts` reads local MDX files and prepares them for the public site.
+4. The blog pages under `app/blog/` render those posts.
+5. The admin page reads the same local content through `app/api/admin/posts/route.ts`.
+6. The pipeline page shows the offline workflow and recent logs instead of orchestrating remote agents.
+
+## Main directories
 
 ```text
 ai-blog/
-├── agents/
-│   ├── skills/
-│   │   └── supabase-postgres-best-practices/
-│   ├── content.ts
-│   ├── image.ts
-│   ├── publisher.ts
-│   ├── research.ts
-│   └── seo.ts
-├── app/
-│   ├── admin/
-│   │   └── page.tsx
-│   ├── api/
-│   │   ├── admin/
-│   │   │   └── posts/
-│   │   │       └── route.ts
-│   │   └── agents/
-│   │       ├── content/route.ts
-│   │       ├── image/route.ts
-│   │       ├── preview/route.ts
-│   │       ├── publisher/route.ts
-│   │       ├── research/route.ts
-│   │       └── seo/route.ts
-│   ├── blog/
-│   │   ├── [slug]/
-│   │   │   └── page.tsx
-│   │   └── posts/
-│   │       ├── hello-world.mdx
-│   │       └── how-to-save-money-on-low-income.mdx
-│   ├── components/
-│   │   └── PostCard.tsx
-│   ├── favicon.ico
-│   ├── globals.css
-│   ├── layout.tsx
-│   └── page.tsx
-├── lib/
-│   ├── client.ts
-│   ├── db.ts
-│   ├── gemini.ts
-│   ├── middleware.ts
-│   ├── posts.ts
-│   ├── server.ts
-│   ├── supabase.ts
-│   └── utils.ts
-├── public/
-│   ├── images/
-│   ├── file.svg
-│   ├── globe.svg
-│   ├── next.svg
-│   ├── vercel.svg
-│   └── window.svg
-├── .env.local
-├── .gitignore
-├── AGENTS.md
-├── CLAUDE.md
-├── package.json
-└── README.md (and other config files)
+|-- app/
+|   |-- admin/
+|   |   `-- page.tsx
+|   |-- api/
+|   |   `-- admin/
+|   |       `-- posts/route.ts
+|   |-- blog/
+|   |   |-- [slug]/page.tsx
+|   |   `-- page.tsx
+|   |-- pipeline/
+|   |   `-- page.tsx
+|   |-- layout.tsx
+|   `-- page.tsx
+|-- components/
+|   `-- EmailCapture.tsx
+|-- data/
+|   |-- affiliate-links.json
+|   |-- products.json
+|   `-- topic-clusters.json
+|-- lib/
+|   |-- affiliate.ts
+|   |-- content-engine.ts
+|   |-- posts.ts
+|   |-- reviews.ts
+|   `-- topic-clusters.ts
+|-- posts/
+|-- scripts/
+|   `-- generate-post.ts
+`-- .tmp-generated/
 ```
 
-### 1. `agents/` - AI Agent Backends
-This directory contains the central logic that powers the AI capabilities of the blog.
-- **`content.ts`** - Agent responsible for drafting blog content.
-- **`image.ts`** - Agent responsible for generating or managing image assets.
-- **`publisher.ts`** - Agent handling the formatting and publishing flow.
-- **`research.ts`** - Agent that scrapes web data and performs research for posts.
-- **`seo.ts`** - Agent dedicated to optimizing content for search engines.
-- **`skills/`** - Contains specific instructional skills/prompts for the AI (e.g., `supabase-postgres-best-practices`).
+## Important modules
 
-### 2. `app/` - Frontend and Application Routing
-Next.js App Router directory containing both page components and API endpoints.
+### `scripts/generate-post.ts`
 
-#### `app/admin/`
-Admin interface of the application for managing agents and blog content.
-- `page.tsx` - Main admin dashboard.
+The main engine.
 
-#### `app/api/` (Backend Routes)
-Serverless API endpoints to communicate with AI agents and the database.
-- **`admin/posts/route.ts`** - API endpoint for retrieving and managing posts.
-- **`agents/`** - API endpoints triggering the various AI agents:
-  - `/content/route.ts`
-  - `/image/route.ts`
-  - `/preview/route.ts`
-  - `/publisher/route.ts`
-  - `/research/route.ts`
-  - `/seo/route.ts`
+- Calls Ollama at `http://localhost:11434`
+- Uses `llama3`
+- Supports fallback content
+- Adds metadata, tags, reading time, internal links, review sections, and logging
+- Avoids duplicate topics and duplicate slugs
 
-#### `app/blog/` (Public Blog Frontend)
-The public-facing blog application.
-- **`[slug]/`** - Dynamic route for individual blog posts (`page.tsx`).
-- **`posts/`** - MDX content files for the blog (`hello-world.mdx`, etc.).
+### `lib/posts.ts`
 
-#### Components and Layout
-- **`components/`** - Shared React UI components (e.g., `PostCard.tsx`).
-- `layout.tsx` - The root layout structure.
-- `page.tsx` - The main landing page.
-- `globals.css` - Global Tailwind and standard CSS styles.
+The content reader for the site.
 
-### 3. `lib/` - Shared Utilities & Services
-Integration files that are utilized across `agents` and `app` components.
-- **`gemini.ts`** - Configuration and instantiation of the Google Gemini AI client.
-- **`supabase.ts`**, **`db.ts`** - Supabase client setup and database abstractions.
-- **`client.ts`**, **`server.ts`** - Environment-specific utility wrappers (usually for Auth/Supabase).
-- **`posts.ts`** - Logic for fetching, parsing, and processing MDX post content.
-- **`middleware.ts`**, **`utils.ts`** - General utility functions and potential routing middleware.
+- Loads local MDX files
+- Normalizes spacing
+- Computes descriptions and reading time
+- Builds related posts
+- Applies affiliate monetization
+- Powers both the public blog and the admin content list
 
-### 4. Configuration Files
-Standard configuration files for the modern frontend stack:
-- `next.config.js` - Next.js configuration.
-- `tailwind.config.mjs` / `postcss.config.mjs` - Tailwind CSS settings.
-- `components.json` - Shadcn UI configuration.
-- `tsconfig.json` - TypeScript compiler parameters.
-- `.env.local` - Environment variables (API keys for Gemini, Supabase, etc.).
+### `lib/content-engine.ts`
+
+Reads the local generation logs and exposes the current status for the pipeline dashboard.
+
+### `app/admin/page.tsx`
+
+Local content browser for generated posts.
+
+### `app/pipeline/page.tsx`
+
+Offline workflow dashboard.
+
+It no longer triggers research, SEO, content, image, or publishing agents.
+
+## Runtime model
+
+### Local machine
+
+- Runs Ollama
+- Runs the generator
+- Writes MDX files
+- Writes generation logs
+
+### Hosted site
+
+- Serves the Next.js app
+- Reads committed MDX content
+- Does not run Ollama
+
+## Optional external systems
+
+These are optional and are not required for content generation:
+
+- GitHub push
+- Vercel deploy hook
+- Mailchimp
+- Google AdSense
+- Affiliate programs
+
+## Removed architecture pieces
+
+The generation path no longer depends on:
+
+- OpenRouter
+- external AI APIs
+- multi-agent orchestration
+- Supabase-backed generation storage
+- research/image/content agent API routes

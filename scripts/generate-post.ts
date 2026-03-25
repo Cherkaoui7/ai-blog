@@ -3,7 +3,7 @@ const path = require('node:path') as typeof import('node:path');
 const matter = require('gray-matter') as typeof import('gray-matter');
 
 const OLLAMA_URL = 'http://localhost:11434/api/generate';
-const MODEL = 'llama3';
+const MODEL = 'llama3.1:8b';
 const DEFAULT_POSTS_DIR = 'posts';
 const LEGACY_POSTS_DIR = path.join(process.cwd(), 'app/blog/posts');
 const GENERATED_DIR = path.join(process.cwd(), '.tmp-generated');

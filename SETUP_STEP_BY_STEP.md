@@ -1,44 +1,36 @@
 # Setup Step By Step
 
-This file tells you exactly what to do to get this project working end to end.
+This is the exact order to get the app working with the new local-only content system.
 
-## 1. Install the base tools
+## 1. Install the required tools
 
-Do these first:
+Install these first:
 
-1. Install Node.js 20 or newer.
-2. Install Git.
-3. Install Ollama.
-4. Make sure `npm` works in your terminal.
+1. Node.js 20 or newer
+2. Git
+3. Ollama
 
-Then in the project folder run:
+Then install project dependencies:
 
 ```powershell
 npm install
 ```
 
-## 2. Create or update `.env.local`
+## 2. Create `.env.local`
 
-The app already expects a `.env.local` file in the project root.
-
-Use this template and fill in real values:
+Use this minimum setup:
 
 ```env
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ADMIN_SECRET=change-this-to-a-strong-password
+```
 
-NEXT_PUBLIC_SUPABASE_URL=https://YOUR-PROJECT.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=YOUR_SUPABASE_BROWSER_ANON_KEY
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=YOUR_SUPABASE_BROWSER_ANON_KEY
-SUPABASE_SERVICE_ROLE_KEY=YOUR_SUPABASE_SERVICE_ROLE_KEY
+Optional values:
 
-OPENROUTER_API_KEY=YOUR_OPENROUTER_API_KEY
-
-GITHUB_TOKEN=YOUR_GITHUB_PAT_WITH_CONTENTS_WRITE
+```env
+GITHUB_TOKEN=YOUR_GITHUB_PAT
 GITHUB_REPO=YOUR_GITHUB_USERNAME/YOUR_REPO_NAME
-VERCEL_DEPLOY_HOOK=YOUR_VERCEL_DEPLOY_HOOK_URL
-
-UNSPLASH_ACCESS_KEY=YOUR_UNSPLASH_KEY
+VERCEL_DEPLOY_HOOK=YOUR_VERCEL_DEPLOY_HOOK
 
 NEXT_PUBLIC_ADSENSE_CLIENT=ca-pub-XXXXXXXXXXXXXXXX
 NEXT_PUBLIC_ADSENSE_LIST_SLOT=1234567890
@@ -50,189 +42,43 @@ MAILCHIMP_EMAIL_FIELD=EMAIL
 MAILCHIMP_SOURCE_FIELD=SOURCE
 ```
 
-Important notes:
+Important:
 
-- Set `NEXT_PUBLIC_SUPABASE_ANON_KEY` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` to the same Supabase browser anon key. The code currently reads both names in different files.
-- `OPENROUTER_API_KEY` is required for the admin pipeline agents.
-- `GITHUB_TOKEN`, `GITHUB_REPO`, and `VERCEL_DEPLOY_HOOK` are required for the publisher flow.
-- If you do not set the Mailchimp variables, email capture still works in placeholder mode.
-- If you do not set the AdSense variables, the ad placeholders stay hidden.
+- You do not need Supabase.
+- You do not need OpenRouter.
+- You do not need any paid AI API key.
 
-## 3. Set up Supabase
+## 3. Start Ollama
 
-Create a Supabase project if you do not already have one.
-
-Then create these two tables in the SQL editor.
-
-### `posts` table
-
-```sql
-create extension if not exists pgcrypto;
-
-create table if not exists public.posts (
-  id uuid primary key default gen_random_uuid(),
-  slug text not null unique,
-  title text not null,
-  keyword text,
-  meta_description text,
-  h2_tags text[],
-  secondary_keywords text[],
-  target_word_count integer,
-  competition text,
-  mdx_content text,
-  word_count integer,
-  image_path text,
-  status text default 'draft',
-  created_at timestamptz default now(),
-  updated_at timestamptz default now(),
-  published_at timestamptz,
-  views integer default 0,
-  revenue numeric default 0
-);
-```
-
-### `research_topics` table
-
-```sql
-create table if not exists public.research_topics (
-  id uuid primary key default gen_random_uuid(),
-  niche text not null,
-  topic text not null,
-  reason text,
-  search_volume text,
-  content_angle text,
-  status text default 'pending',
-  created_at timestamptz default now()
-);
-```
-
-After that:
-
-1. Copy your Supabase project URL.
-2. Copy your anon key.
-3. Copy your service role key.
-4. Put them in `.env.local`.
-
-## 4. Set up Ollama for the free content engine
-
-The local generator in `scripts/generate-post.ts` calls Ollama at `http://localhost:11434`.
-
-Run these commands:
+Pull the model once:
 
 ```powershell
 ollama pull llama3
+```
+
+Start the local server:
+
+```powershell
 ollama serve
 ```
 
-Then verify Ollama is reachable:
+Optional check:
 
 ```powershell
 Invoke-WebRequest http://localhost:11434/api/tags
 ```
 
-If this does not work, `npm run generate` will still run, but it will use fallback content instead of live `llama3` output.
+If Ollama is down, the generator still works with fallback content.
 
-## 5. Set up GitHub publishing
-
-This is required only if you want the admin pipeline to publish content automatically through GitHub.
-
-Do this:
-
-1. Create a GitHub personal access token with repository contents write access.
-2. Put that token in `GITHUB_TOKEN`.
-3. Set `GITHUB_REPO` to `username/repo-name`.
-4. Make sure the repo default branch is `main`, because the publisher writes to `main`.
-
-The publisher writes generated posts into:
-
-- `app/blog/posts/*.mdx`
-- `public/images/*`
-
-## 6. Set up Vercel deploy hook
-
-This is required only if you want publishing to trigger a redeploy automatically.
-
-Do this:
-
-1. Create a deploy hook in Vercel.
-2. Copy the hook URL.
-3. Put it in `VERCEL_DEPLOY_HOOK`.
-
-## 7. Set up monetization
-
-### Affiliate links
-
-Replace all placeholder values in these files:
-
-- [data/affiliate-links.json](/C:/Users/USER/Documents/ai-blog/data/affiliate-links.json)
-- [data/products.json](/C:/Users/USER/Documents/ai-blog/data/products.json)
-
-Specifically replace:
-
-- `YOURAFFILIATETAG-20`
-- `YOUR_AFFILIATE_ID`
-
-### AdSense
-
-If you want ads live, set these env vars:
-
-- `NEXT_PUBLIC_ADSENSE_CLIENT`
-- `NEXT_PUBLIC_ADSENSE_LIST_SLOT`
-- `NEXT_PUBLIC_ADSENSE_ARTICLE_TOP_SLOT`
-- `NEXT_PUBLIC_ADSENSE_ARTICLE_BOTTOM_SLOT`
-
-## 8. Set up email capture
-
-If you want real email collection through Mailchimp:
-
-1. Get your Mailchimp embedded form action URL.
-2. Put it in `MAILCHIMP_FORM_ACTION`.
-3. Keep `MAILCHIMP_EMAIL_FIELD=EMAIL` unless your form uses another field name.
-4. Set `MAILCHIMP_SOURCE_FIELD` only if you want to pass the article slug as an extra field.
-
-If you skip this, the site still works. Emails will be stored in placeholder mode by the server action.
-
-## 9. Start the app locally
-
-Run:
-
-```powershell
-npm run dev
-```
-
-Then open:
-
-```text
-http://localhost:3000
-```
-
-## 10. Log into the admin area
-
-To access admin and pipeline pages:
-
-1. Open `/login`
-2. Enter the value of `ADMIN_SECRET`
-
-The login route uses that exact env value.
-
-## 11. Test each major system
-
-Run these checks in order.
-
-### Public blog
-
-1. Open `/blog`
-2. Open any article
-3. Confirm you see:
-   - article content
-   - related reading
-   - affiliate disclosure
-   - email capture block
-   - ad slots only if AdSense envs are set
-
-### Local content engine
+## 4. Test the generator
 
 Dry run:
+
+```powershell
+npm run generate -- --dry-run
+```
+
+Batch dry run:
 
 ```powershell
 npm run generate -- --count 3 --dry-run
@@ -241,115 +87,111 @@ npm run generate -- --count 3 --dry-run
 Real write:
 
 ```powershell
-npm run generate:batch
+npm run generate
 ```
 
-This writes to `/posts` by default.
+Generated posts are written to:
 
-### Admin pipeline
+```text
+posts/
+```
 
-Open `/pipeline` and test the flow:
+Logs are written to:
 
-1. Research
-2. SEO
-3. Content
-4. Image
-5. Publish
+```text
+.tmp-generated/content-engine-log.json
+.tmp-generated/topic-usage.json
+```
 
-For this path to fully work, you need:
+## 5. Start the app
 
-- Supabase configured
-- OpenRouter configured
-- GitHub configured
-- optional Vercel hook configured
+Run:
 
-## 12. Deploy the site
+```powershell
+npm run dev
+```
 
-If you deploy to Vercel:
+Open:
 
-1. Add all required env vars in Vercel project settings.
-2. Deploy the app.
-3. Set `NEXT_PUBLIC_SITE_URL` to the real production URL.
+```text
+http://localhost:3000
+```
 
-Important:
+## 6. Check the local UI
 
-- Vercel can host the site.
-- Vercel cannot run your local Ollama model.
-- The free local generator only works on a machine where Ollama is installed and running.
+Verify these pages:
 
-That means:
+1. `/blog`
+2. `/blog/<post-slug>`
+3. `/admin`
+4. `/pipeline`
+5. `/login`
 
-1. Use the local Ollama generator from your own machine, then push content.
-2. Or use the admin pipeline path with OpenRouter for hosted generation.
+Notes:
 
-## 13. Know what is optional vs required
+- `/admin` now reads local MDX posts.
+- `/pipeline` is now an offline workflow dashboard, not a generation orchestrator.
+- Login still uses `ADMIN_SECRET`.
 
-### Required for the website itself
+## 7. Optional GitHub publishing
 
-- `NEXT_PUBLIC_SITE_URL`
-- `ADMIN_SECRET`
-- `npm install`
-- `npm run dev`
+Only do this if you want to push generated content to a remote repo.
 
-### Required for local free generation
+1. Create a GitHub personal access token with repository contents write access.
+2. Set `GITHUB_TOKEN`.
+3. Set `GITHUB_REPO` in the form `username/repo-name`.
+4. Optionally set `VERCEL_DEPLOY_HOOK`.
 
-- Ollama installed
-- `ollama pull llama3`
-- `ollama serve`
+Typical publish flow:
 
-### Required for admin pipeline
+```powershell
+git add posts
+git commit -m "publish generated posts"
+git push
+```
 
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY`
-- `OPENROUTER_API_KEY`
+## 8. Optional monetization and email
 
-### Required for auto publishing
+Affiliate links:
 
-- `GITHUB_TOKEN`
-- `GITHUB_REPO`
+1. Replace placeholder affiliate IDs in `data/affiliate-links.json`
+2. Replace placeholder affiliate IDs in `data/products.json`
 
-### Required for auto redeploy after publish
+Email capture:
 
-- `VERCEL_DEPLOY_HOOK`
+1. Set `MAILCHIMP_FORM_ACTION` if you want real Mailchimp submissions
+2. If you skip it, the app keeps using local placeholder capture
 
-### Required for live money systems
+Ads:
 
-- Real affiliate IDs in the JSON files
-- AdSense env vars
-- Mailchimp env vars
+1. Set the AdSense env vars only if you want live ads
+2. If you skip them, the placeholders stay hidden
 
-## 14. Final go-live checklist
+## 9. Production reality
 
-Before you call the app fully live, make sure all of these are true:
+The site can be deployed to Vercel, but the generator still runs where Ollama runs.
 
-1. `npm run build` passes.
-2. Ollama responds at `http://localhost:11434`.
-3. Supabase tables exist.
-4. Admin login works.
-5. `npm run generate -- --count 3 --dry-run` works.
-6. Real affiliate IDs replaced the placeholders.
-7. Mailchimp env vars are set if you want real email capture.
-8. AdSense env vars are set if you want ads live.
-9. GitHub publishing works from the pipeline.
-10. `NEXT_PUBLIC_SITE_URL` is set to the real domain in production.
+That means the real flow is:
 
-## 15. Recommended order if you want the fastest path
+1. Run Ollama on your own machine
+2. Generate posts locally
+3. Review the content locally
+4. Push the generated MDX files to GitHub
+5. Let Vercel deploy the updated site
 
-If you want the shortest path to a fully working system, do it in this order:
+## 10. Final checklist
 
-1. `npm install`
-2. Fill `.env.local`
-3. Create Supabase tables
-4. Start Ollama and pull `llama3`
-5. Run `npm run dev`
-6. Run `npm run build`
-7. Run `npm run generate -- --count 3 --dry-run`
-8. Replace affiliate placeholders
-9. Add Mailchimp env vars
-10. Add AdSense env vars
-11. Configure GitHub + Vercel hook
-12. Test `/pipeline`
+Before calling the system fully working, confirm:
 
-That is the exact order that makes the least amount of rework.
+1. `npm run build` passes
+2. `ollama serve` is running
+3. `npm run generate -- --dry-run` works
+4. `npm run generate` creates a file in `posts/`
+5. `/blog` shows the new post
+6. `/admin` lists local posts
+7. `/pipeline` shows recent generation logs
+8. Affiliate placeholders are replaced if you want revenue
+9. Mailchimp envs are set if you want live email capture
+10. AdSense envs are set if you want live ads
+
+That is the exact setup path for the current architecture.

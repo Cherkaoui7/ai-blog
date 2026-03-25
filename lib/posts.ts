@@ -1,7 +1,6 @@
 import fs from 'fs';
 import path from 'path';
 import matter from 'gray-matter';
-import { cache } from 'react';
 import { applyAffiliateMonetization } from '@/lib/affiliate';
 import { getTopicClusterMatch } from '@/lib/topic-clusters';
 
@@ -38,6 +37,18 @@ export type Post = {
   lastUpdated: string;
   content: string;
   relatedPosts: RelatedPost[];
+};
+
+export type AdminPost = {
+  id: string;
+  title: string;
+  slug: string;
+  keyword: string;
+  word_count: number;
+  status: string;
+  created_at: string;
+  mdx_content: string;
+  meta_description: string;
 };
 
 type ParsedPost = Omit<Post, 'relatedPosts'> & {
@@ -330,7 +341,7 @@ function injectRelatedLinks(content: string, relatedPosts: RelatedPost[]): strin
   return `${normalized}\n\n${relatedBlock}`;
 }
 
-const loadPosts = cache(async (): Promise<Post[]> => {
+async function loadPosts(): Promise<Post[]> {
   const files = getPostFiles();
   const parsedPosts = files.map(file => readPostFile(file.slug, file.filePath));
   const sortedPosts = [...parsedPosts].sort((left, right) =>
@@ -357,7 +368,7 @@ const loadPosts = cache(async (): Promise<Post[]> => {
       relatedPosts,
     };
   });
-});
+}
 
 export async function getAllPosts(): Promise<Post[]> {
   return loadPosts();
@@ -366,4 +377,20 @@ export async function getAllPosts(): Promise<Post[]> {
 export async function getPostBySlug(slug: string): Promise<Post | null> {
   const posts = await loadPosts();
   return posts.find(post => post.slug === slug) || null;
+}
+
+export async function getAdminPosts(): Promise<AdminPost[]> {
+  const posts = await loadPosts();
+
+  return posts.map(post => ({
+    id: post.slug,
+    title: post.title,
+    slug: post.slug,
+    keyword: post.keyword || post.tags[0] || '',
+    word_count: countWords(post.content),
+    status: 'local',
+    created_at: post.date,
+    mdx_content: post.content,
+    meta_description: post.description,
+  }));
 }

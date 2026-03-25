@@ -1,36 +1,88 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AI Blog
 
-## Getting Started
+Local-first blog generator built with Next.js, MDX, and Ollama.
 
-First, run the development server:
+## What changed
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- No paid AI APIs
+- No agent orchestration pipeline
+- No Supabase dependency for content generation
+- `scripts/generate-post.ts` is the main content engine
+- Posts are written to `posts/`
+- Generation logs are written to `.tmp-generated/`
+
+## Quick start
+
+1. Install dependencies:
+
+```powershell
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Install Ollama and pull the model:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```powershell
+ollama pull llama3
+ollama serve
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+3. Create `.env.local` with the minimum local settings:
 
-## Learn More
+```env
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+ADMIN_SECRET=change-this
+```
 
-To learn more about Next.js, take a look at the following resources:
+4. Generate content:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```powershell
+npm run generate
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+5. Start the app:
 
-## Deploy on Vercel
+```powershell
+npm run dev
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+6. Open:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```text
+http://localhost:3000
+```
+
+## Main commands
+
+```powershell
+npm run generate
+npm run generate -- --count 3
+npm run generate -- --dry-run
+npm run dev
+npm run build
+```
+
+## Optional env vars
+
+Use these only if you need the related feature:
+
+```env
+GITHUB_TOKEN=your_github_token
+GITHUB_REPO=your-username/your-repo
+VERCEL_DEPLOY_HOOK=optional_vercel_hook
+
+NEXT_PUBLIC_ADSENSE_CLIENT=optional
+NEXT_PUBLIC_ADSENSE_LIST_SLOT=optional
+NEXT_PUBLIC_ADSENSE_ARTICLE_TOP_SLOT=optional
+NEXT_PUBLIC_ADSENSE_ARTICLE_BOTTOM_SLOT=optional
+
+MAILCHIMP_FORM_ACTION=optional
+MAILCHIMP_EMAIL_FIELD=EMAIL
+MAILCHIMP_SOURCE_FIELD=SOURCE
+```
+
+## Notes
+
+- If Ollama is unavailable, the generator writes improved fallback content instead of crashing.
+- Vercel can host the site, but it cannot run your local Ollama model.
+- The intended flow is: generate locally, review locally, then push posts to GitHub.
+- The public blog and admin UI read local MDX files, not a remote database.
