@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI Blog App Summary</title>
+  <style>
+    :root {
+      --ink: #102127;
+      --muted: #55666d;
+      --line: #d7e0e3;
+      --soft: #edf3f4;
+      --panel: #f7fafb;
+      --accent: #0b7a75;
+      --accent-soft: #dff3f0;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    @page {
+      size: A4;
+      margin: 0;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      background: #ffffff;
+      color: var(--ink);
+      font-family: "Segoe UI", Arial, sans-serif;
+    }
+
+    body {
+      width: 210mm;
+      min-height: 297mm;
+    }
+
+    .page {
+      width: 210mm;
+      min-height: 297mm;
+      padding: 12mm 12mm 11mm;
+      background:
+        linear-gradient(180deg, #fbfdfd 0%, #ffffff 24%),
+        radial-gradient(circle at top right, rgba(11, 122, 117, 0.08), transparent 34%);
+      overflow: hidden;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 7mm;
+    }
+
+    .eyebrow {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 25px;
+      line-height: 1.05;
+      letter-spacing: -0.04em;
+    }
+
+    .subtitle {
+      margin: 8px 0 0;
+      max-width: 520px;
+      color: var(--muted);
+      font-size: 11.2px;
+      line-height: 1.45;
+    }
+
+    .stamp {
+      min-width: 130px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.82);
+      font-size: 10px;
+      line-height: 1.35;
+      color: var(--muted);
+    }
+
+    .stamp strong {
+      display: block;
+      color: var(--ink);
+      font-size: 10.5px;
+      margin-bottom: 2px;
+    }
+
+    .cols {
+      display: grid;
+      grid-template-columns: 1.03fr 0.97fr;
+      gap: 7mm;
+      align-items: start;
+    }
+
+    .stack {
+      display: grid;
+      gap: 5.5mm;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: linear-gradient(180deg, rgba(247, 250, 251, 0.95), rgba(255, 255, 255, 0.98));
+      padding: 12px 13px;
+      break-inside: avoid;
+    }
+
+    .card h2 {
+      margin: 0 0 8px;
+      font-size: 10.4px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    .card p {
+      margin: 0;
+      font-size: 11px;
+      line-height: 1.46;
+    }
+
+    .persona {
+      padding: 11px 12px;
+      border-radius: 12px;
+      background: #13272f;
+      color: #eff7f8;
+    }
+
+    .persona h2 {
+      color: #89d5cf;
+      margin-bottom: 6px;
+    }
+
+    .persona p {
+      color: #e9f6f5;
+    }
+
+    ul,
+    ol {
+      margin: 0;
+      padding-left: 17px;
+    }
+
+    li {
+      font-size: 10.7px;
+      line-height: 1.38;
+      margin: 0 0 5px;
+    }
+
+    li:last-child {
+      margin-bottom: 0;
+    }
+
+    .steps {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 7px;
+    }
+
+    .steps li {
+      margin: 0;
+      padding: 8px 10px 8px 36px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #ffffff;
+      position: relative;
+      line-height: 1.34;
+    }
+
+    .steps li::before {
+      content: attr(data-step);
+      position: absolute;
+      left: 10px;
+      top: 8px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #ffffff;
+      font-size: 10px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    code {
+      font-family: "Cascadia Code", Consolas, monospace;
+      font-size: 10px;
+      background: var(--soft);
+      border-radius: 5px;
+      padding: 1px 4px;
+    }
+
+    .foot {
+      margin-top: 5mm;
+      padding-top: 3.5mm;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 9.2px;
+      line-height: 1.35;
+    }
+
+    .note {
+      margin-top: 7px;
+      padding: 7px 8px;
+      border-radius: 9px;
+      background: #fff8e8;
+      color: #7a5a00;
+      font-size: 9.7px;
+      line-height: 1.35;
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="topbar">
+      <div>
+        <div class="eyebrow">One-Page Repo Summary</div>
+        <h1>AI Blog</h1>
+        <p class="subtitle">
+          Local-first MDX publishing app built with Next.js 16, React 19, and Ollama. It generates posts into local files and serves them through a public blog plus protected admin and pipeline views, without a paid AI API in the generation path.
+        </p>
+      </div>
+      <div class="stamp">
+        <strong>Workspace Evidence</strong>
+        Repo snapshot reviewed on 2026-03-26
+        <br>
+        Output target: <code>posts/</code>
+      </div>
+    </section>
+
+    <section class="cols">
+      <div class="stack">
+        <article class="card persona">
+          <h2>Who It's For</h2>
+          <p>
+            Primary user: a local-first publisher, solo creator, or small team that wants to generate, review, and ship blog content from its own machine, then optionally push the resulting MDX to GitHub or a hosted Next.js site.
+          </p>
+        </article>
+
+        <article class="card">
+          <h2>What It Does</h2>
+          <ul>
+            <li>Generates new MDX posts locally from <code>scripts/generate-post.ts</code>, with <code>--count</code>, <code>--topic</code>, and <code>--dry-run</code> support.</li>
+            <li>Uses local Ollama generation and falls back to built-in markdown templates if Ollama is unavailable.</li>
+            <li>Renders a public homepage, article index, and dynamic article pages from local MDX content.</li>
+            <li>Enriches posts with frontmatter, read time, related reading links, tags, and affiliate or recommended-tool sections.</li>
+            <li>Provides a protected content manager with article list, preview mode, and raw MDX view.</li>
+            <li>Provides a protected pipeline dashboard showing output folder, recent runs, topic usage, and GitHub publish status.</li>
+            <li>Supports email capture via Mailchimp or local placeholder storage, plus optional AdSense slots and sitemap generation.</li>
+          </ul>
+        </article>
+      </div>
+
+      <div class="stack">
+        <article class="card">
+          <h2>How It Works</h2>
+          <ul>
+            <li><code>data/topic-clusters.json</code> and <code>data/products.json</code> guide topic rotation and review-style matches; <code>scripts/generate-post.ts</code> calls local Ollama at <code>http://localhost:11434/api/generate</code>, writes MDX to <code>posts/</code>, and logs runs to <code>.tmp-generated/</code>.</li>
+            <li><code>lib/posts.ts</code> reads <code>posts/</code> and legacy <code>app/blog/posts/</code>, parses frontmatter with <code>gray-matter</code>, derives descriptions, tags, and read time, then injects related links and affiliate monetization from <code>data/affiliate-links.json</code>.</li>
+            <li><code>app/page.tsx</code>, <code>app/blog/page.tsx</code>, and <code>app/blog/[slug]/page.tsx</code> render the public site; article pages use <code>MDXRemote</code> and per-page metadata.</li>
+            <li><code>app/api/admin/posts/route.ts</code> feeds <code>app/admin/page.tsx</code>; <code>lib/middleware.ts</code> and <code>app/api/auth/login/route.ts</code> gate <code>/admin</code> and <code>/pipeline</code> with <code>ADMIN_SECRET</code>.</li>
+            <li><code>lib/content-engine.ts</code> reads generation logs for <code>app/pipeline/page.tsx</code>; <code>app/actions/email-capture.ts</code> stores signups locally or posts them to Mailchimp; <code>app/sitemap.ts</code> builds sitemap entries.</li>
+          </ul>
+        </article>
+
+        <article class="card">
+          <h2>How To Run</h2>
+          <ol class="steps">
+            <li data-step="1"><code>npm install</code></li>
+            <li data-step="2">Create <code>.env.local</code> with <code>NEXT_PUBLIC_SITE_URL=http://localhost:3000</code> and <code>ADMIN_SECRET=change-this</code>.</li>
+            <li data-step="3">Start Ollama. Repo docs show <code>ollama pull llama3</code> then <code>ollama serve</code>; note that <code>scripts/generate-post.ts</code> requests <code>llama3.1:8b</code>.</li>
+            <li data-step="4">Generate content with <code>npm run generate</code>.</li>
+            <li data-step="5">Run <code>npm run dev</code> and open <code>http://localhost:3000</code>.</li>
+          </ol>
+          <div class="note">
+            Repo evidence did not show a remote database or paid AI API requirement in the current generation path.
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <footer class="foot">
+      Evidence sampled from <code>README.md</code>, <code>architecture.md</code>, <code>SETUP_STEP_BY_STEP.md</code>, <code>scripts/generate-post.ts</code>, <code>lib/posts.ts</code>, <code>lib/content-engine.ts</code>, <code>app/page.tsx</code>, <code>app/blog/[slug]/page.tsx</code>, <code>app/admin/page.tsx</code>, <code>app/pipeline/page.tsx</code>, <code>app/actions/email-capture.ts</code>, and related route/data files.
+    </footer>
+  </main>
+</body>
+</html>
