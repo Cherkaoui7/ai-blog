@@ -1,5 +1,6 @@
 'use client';
 
+import DOMPurify from 'isomorphic-dompurify';
 import { useEffect, useState } from 'react';
 
 type Post = {
@@ -21,16 +22,31 @@ export default function AdminPage() {
   const [view, setView] = useState<'preview' | 'raw'>('preview');
 
   useEffect(() => {
-    fetch('/api/admin/posts')
-      .then(response => response.json())
+    fetch('/api/admin/posts', {
+      cache: 'no-store',
+      credentials: 'same-origin',
+    })
+      .then(async response => {
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to load posts.');
+        }
+
+        return data;
+      })
       .then(data => {
         setPosts(data.posts || []);
+        setLoading(false);
+      })
+      .catch(() => {
+        setPosts([]);
         setLoading(false);
       });
   }, []);
 
   function mdxToHTML(mdx: string): string {
-    return mdx
+    const rendered = mdx
       .replace(/^---[\s\S]*?---\n/m, '')
       .replace(/^## (.+)$/gm, '<h2>$1</h2>')
       .replace(/^### (.+)$/gm, '<h3>$1</h3>')
@@ -48,6 +64,11 @@ export default function AdminPage() {
         /\[\[PRODUCT_LINK:([^\]]+)\]\]/g,
         '<span style="background:#fef3c7;padding:2px 6px;border-radius:4px;font-size:12px;color:#92400e">LINK: $1</span>'
       );
+
+    return DOMPurify.sanitize(rendered, {
+      ALLOWED_TAGS: ['a', 'blockquote', 'em', 'h1', 'h2', 'h3', 'li', 'p', 'span', 'strong', 'ul'],
+      ALLOWED_ATTR: ['href', 'rel', 'style', 'target'],
+    });
   }
 
   const statusColor: Record<string, string> = {

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 const fs = require('node:fs') as typeof import('node:fs');
 const path = require('node:path') as typeof import('node:path');
 const matter = require('gray-matter') as typeof import('gray-matter');
@@ -355,11 +356,14 @@ function cleanContent(markdown: string, title: string): string {
   let content = markdown
     .replace(/\r/g, '')
     .replace(/^---[\s\S]*?---\s*/m, '')
-    .replace(/```(?:md|markdown|mdx)?/gi, '')
-    .replace(/```/g, '')
     .trim();
 
-  content = content.replace(/^Here(?:'s| is)[^\n]*\n+/i, '');
+  const wrappedMarkdownMatch = content.match(/^```(?:md|markdown|mdx)?\s*\n([\s\S]*?)\n```$/i);
+  if (wrappedMarkdownMatch) {
+    content = wrappedMarkdownMatch[1].trim();
+  }
+
+  content = content.replace(/^Here(?:'s| is)\s+(?:your|the)\s+(?:blog post|article|markdown|content)[^\n]*\n+/i, '');
   content = content.replace(/^Title:\s+.+\n+/i, '');
   content = content.replace(/^Meta Description:\s+.+\n+/i, '');
   content = content.replace(/^Description:\s+.+\n+/i, '');
@@ -367,6 +371,7 @@ function cleanContent(markdown: string, title: string): string {
   content = content.replace(/^Tags:\s+.+\n+/i, '');
   content = content.replace(/^#\s+.+\n+/, '');
   content = content.replace(/\n+(?:I hope this helps|Let me know if you want)[\s\S]*$/i, '');
+  content = content.replace(/\n+\(?(?:Note|Notes?)[:\s][\s\S]*?(?:distilled version|word limit|original text|generated content)[\s\S]*$/i, '');
 
   const lines = content
     .split('\n')
@@ -380,6 +385,28 @@ function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+function refineTitle(title: string): string {
+  const cleaned = title
+    .replace(/^#+\s*/, '')
+    .replace(/^\*{1,3}\s*/, '')
+    .replace(/\s*\*{1,3}$/, '')
+    .replace(/^_{1,3}\s*/, '')
+    .replace(/\s*_{1,3}$/, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (!cleaned) return '';
+
+  const normalized = cleaned.toLowerCase();
+  const strongLeadPattern = /^(how|why|what|when|where|best|the|a|an)\b/;
+
+  if (/\d+/.test(cleaned) || strongLeadPattern.test(normalized) || /[:?-]/.test(cleaned)) {
+    return cleaned;
+  }
+
+  return titleCase(cleaned);
+}
+
 function ensureSection(content: string, heading: string, fallbackBody: string): string {
   const normalized = normalizeSpacing(content);
   const pattern = new RegExp(`^##\\s+${heading}\\b`, 'im');
@@ -389,6 +416,18 @@ function ensureSection(content: string, heading: string, fallbackBody: string): 
   }
 
   return `${normalized}\n\n## ${heading}\n\n${fallbackBody}`;
+}
+
+function normalizeRequiredSectionHeadings(content: string, headings: string[]): string {
+  let normalized = normalizeSpacing(content);
+
+  for (const heading of headings) {
+    const escapedHeading = escapeRegExp(heading);
+    normalized = normalized.replace(new RegExp(`^\\*\\*${escapedHeading}\\*\\*$`, 'gim'), `## ${heading}`);
+    normalized = normalized.replace(new RegExp(`^${escapedHeading}:?$`, 'gim'), `## ${heading}`);
+  }
+
+  return normalized;
 }
 
 function ensureAffiliateDisclosure(content: string): string {
@@ -411,9 +450,19 @@ function buildProductMarkdownLink(product: ReviewProduct): string {
   return `[${product.name}](${product.affiliateLink})`;
 }
 
+function hasReviewIntent(...inputs: string[]): boolean {
+  const normalized = inputs.map(normalizeLookupValue).filter(Boolean);
+  if (normalized.length === 0) return false;
+
+  const reviewIntentPattern = /\b(best|top|review|reviews|compare|comparison|vs|versus|alternative|alternatives|app|apps|tool|tools|software|platform|platforms)\b/;
+
+  return normalized.some(input => reviewIntentPattern.test(input));
+}
+
 function getReviewMatch(...inputs: string[]): ReviewMatch | null {
   const normalizedInputs = inputs.map(normalizeLookupValue).filter(Boolean);
   if (normalizedInputs.length === 0) return null;
+  if (!hasReviewIntent(...normalizedInputs)) return null;
 
   const matches = Object.entries(PRODUCT_CATALOG)
     .map(([key, entry]) => {
@@ -713,14 +762,301 @@ function buildReviewFallbackMarkdown(entry: ReviewTopicEntry): string {
   ].join('\n');
 }
 
+function ensureHumanStandardSections(content: string, title: string, topic: string): string {
+  const recommendedToolBody = [
+    '> This article may contain affiliate links.',
+    '',
+    `If you want the easiest way to apply "${title}" in real life, use a tool that makes the next step obvious.`,
+    '',
+    'The best pick is usually not the most powerful one. It is the one you will still use on a tired Tuesday.',
+    '',
+    'Choose something that reduces friction, saves time, or removes guesswork. Skip anything that makes the process feel heavier.',
+  ].join('\n');
+
+  const finalThoughtsBody = [
+    `The best results with ${topic.toLowerCase()} usually come from clarity and repetition, not one perfect burst of motivation.`,
+    '',
+    'If the system only works on your best days, it is not a real system yet. Keep trimming the friction until it fits normal life.',
+  ].join('\n');
+
+  const callToActionBody = [
+    `What's the part of "${title}" that usually falls apart first?`,
+    '',
+    'Pick one small step today, try the tool mentioned above if it helps, and give the new setup a real week before judging it.',
+    '',
+    'If this gave you one useful idea, save it or share it with someone who is stuck in the same cycle.',
+    '',
+    'Small wins count more than clean plans that never get used.',
+  ].join('\n');
+
+  let normalized = ensureSection(content, 'Recommended Tool', recommendedToolBody);
+  normalized = ensureSection(normalized, 'Final Thoughts', finalThoughtsBody);
+  normalized = ensureSection(normalized, 'Call To Action', callToActionBody);
+
+  return ensureAffiliateDisclosure(normalized);
+}
+
+function ensureHumanReviewSections(content: string, entry: ReviewTopicEntry): string {
+  const finalThoughtsBody = [
+    'A useful review should make the decision easier, not give you five more tabs to keep open.',
+    '',
+    'Pick the tool that matches how you already work, test it long enough to feel the friction, and only switch if it is still slowing you down.',
+  ].join('\n');
+
+  const callToActionBody = [
+    `What's the biggest thing making "${entry.reviewTitle}" harder than it should be right now?`,
+    '',
+    'Choose the clearest fit, test it this week, and avoid over-comparing once you already have a strong default option.',
+    '',
+    'If this helped you narrow the choice, save it or send it to someone else who is stuck deciding.',
+    '',
+    'Momentum matters more than finding a tool that looks perfect on paper.',
+  ].join('\n');
+
+  let normalized = ensureSection(content, 'Quick Comparison Table', stripSectionHeading(buildQuickComparisonTable(entry)));
+  normalized = ensureSection(normalized, 'Best Overall', stripSectionHeading(buildBestOverallSection(entry)));
+  normalized = ensureSection(normalized, 'Pros and Cons', stripSectionHeading(buildProsAndConsSection(entry)));
+  normalized = ensureSection(normalized, 'Final Recommendation', stripSectionHeading(buildRecommendationSection(entry)));
+  normalized = ensureSection(normalized, 'Final Thoughts', finalThoughtsBody);
+  normalized = ensureSection(normalized, 'Call To Action', callToActionBody);
+  normalized = injectProductLinks(normalizeSpacing(normalized), entry);
+
+  return ensureAffiliateDisclosure(normalized);
+}
+
+function buildHumanStandardFallbackMarkdown(topic: string): string {
+  const title = titleCase(topic);
+
+  return `# ${title}
+
+${title} sounds simple until real life gets involved. That is usually where things fall apart: not because you do not care, but because the system asks for too much at the wrong moment.
+
+## The Real Problem
+
+Most people do not fail because they are lazy. They fail because the plan is vague, the first step is annoying, and the system only works when motivation is high.
+
+\`\`\`text
+Too vague -> hard to start
+Too big -> easy to avoid
+Too perfect -> impossible to repeat
+\`\`\`
+
+That creates the same loop over and over: strong start, messy middle, then guilt. After a few rounds, the problem feels bigger than it really is.
+
+## What Actually Works
+
+A better approach is usually smaller and less exciting. You lower the friction, make the first step obvious, and stop pretending you will always have extra time later.
+
+What helps most:
+
+- Set an easy baseline you can hit this week.
+- Measure progress in one simple way.
+- Make the target realistic enough that follow-through is likely.
+
+## A Simple System
+
+Pick a realistic target, decide when it happens, and make the setup simple enough that you can still do it on a busy day.
+
+For example, if the plan depends on a full hour, special energy, and perfect timing, it is fragile. If it fits into a normal day with clear cues, it survives.
+
+## Recommended Tool
+
+> This article may contain affiliate links.
+
+A simple checklist, tracker, or timer can help you stay consistent without turning the process into another project.
+
+Pick the tool that makes the next step easier, not the one with the longest feature list. The right tool should reduce friction fast.
+
+## Final Thoughts
+
+Good systems are a little boring, and that is usually a good sign. They are easy to start, easy to repeat, and strong enough to survive a messy week.
+
+## Call To Action
+
+What's the part of "${title}" that usually breaks first?
+
+Pick one small change, test it this week, and pay attention to whether it makes the next action easier.
+
+If this helped, save it or share it with someone who is trying to make the same thing stick.
+
+Small wins beat complicated plans every time.`;
+}
+
+function buildHumanReviewFallbackMarkdown(entry: ReviewTopicEntry): string {
+  const bestOverall = getBestOverallProduct(entry);
+  const runnerUp = entry.products.find(product => product.name !== bestOverall.name) || bestOverall;
+
+  return [
+    `# ${entry.reviewTitle}`,
+    '',
+    `The right ${entry.comparisonLabel} should make your life easier quickly. If it adds more setup, more tabs, or more confusion, it is probably the wrong fit.`,
+    '',
+    'This comparison focuses on what actually matters in real use: how fast you can decide, how easy the tool is to stick with, and where the tradeoffs show up.',
+    '',
+    buildQuickComparisonTable(entry),
+    '',
+    buildBestOverallSection(entry),
+    '',
+    '## What Actually Matters',
+    '',
+    'Start with the one job you need the tool to do really well. Some people need stronger structure. Others just need a simpler workflow they will actually keep using.',
+    '',
+    `A longer feature list does not matter if the workflow already feels heavy by week two. In most cases, ${bestOverall.name} wins because it is the safest default. ${runnerUp.name} becomes more interesting if your main priority is ${runnerUp.bestFor}.`,
+    '',
+    buildProsAndConsSection(entry),
+    '',
+    buildRecommendationSection(entry),
+    '',
+    '## Final Thoughts',
+    '',
+    'A useful review should leave you with one confident next step. Pick the strongest fit, use it long enough to judge it fairly, and do not confuse more research with better progress.',
+    '',
+    '## Call To Action',
+    '',
+    `What's making "${entry.reviewTitle}" harder than it should be right now?`,
+    '',
+    'Choose the best-fit option, test it this week, and notice whether it reduces friction fast enough to keep.',
+    '',
+    'If this narrowed the choice, save it or send it to someone else who is still comparing.',
+    '',
+    'The goal is a clear decision, not endless comparison.',
+  ].join('\n');
+}
+
 function buildFallbackMarkdown(topic: string, reviewMatch: ReviewMatch | null): string {
-  return reviewMatch ? buildReviewFallbackMarkdown(reviewMatch.entry) : buildStandardFallbackMarkdown(topic);
+  return reviewMatch
+    ? buildHumanReviewFallbackMarkdown(reviewMatch.entry)
+    : buildHumanStandardFallbackMarkdown(topic);
+}
+
+function buildReviewPrompt(topic: string, entry: ReviewTopicEntry): string {
+  return `Write a distilled, human-sounding product comparison article in markdown.
+
+Topic: ${topic}
+Title: ${entry.reviewTitle}
+
+Products:
+${buildPromptProductList(entry)}
+
+GOAL:
+Help the reader choose the best product quickly, trust the recommendation, and take action.
+
+STRUCTURE:
+
+- Sharp opening that names the reader's real confusion
+- Quick explanation of what actually matters
+- ## Quick Comparison Table
+- ## Best Overall (clear winner + why)
+- ## Pros and Cons (honest)
+- ## Who Each Product Is For
+- ## Final Recommendation
+- ## Final Thoughts
+- ## Call To Action
+
+STYLE:
+
+- Sound like one real person helping one reader.
+- Use simple everyday English.
+- Short paragraphs, varied sentence lengths, and occasional bullets.
+- Mix direct statements with practical examples.
+- Slightly conversational, never robotic.
+- Honest, useful, and decisive.
+- Avoid sounding too polished or too corporate.
+- Avoid these phrases: "In today's world", "It is important to note", "In conclusion", "delve", "unlock".
+- Do not add notes about summaries, word limits, prompts, or how the article was generated.
+- Do not invent statistics, sources, quotes, or testimonials.
+- You may use at most one short fenced \`text\` block if it helps the decision feel clearer.
+
+CONVERSION RULES:
+
+- Be honest. No fake hype.
+- Show tradeoffs clearly.
+- Help the reader decide fast.
+- Mention real usage situations.
+- Reduce decision friction.
+- You MUST clearly recommend ONE best option and explain why it is the easiest or safest choice for most people.
+- Explain how the tool saves time, reduces effort, or removes confusion. Focus on real-life usage, not features.
+- Encourage the reader to start now, not later, without fake urgency.
+- Include EXACT sentence:
+"This article may contain affiliate links."
+
+Return only markdown.`;
+}
+
+function buildStandardPrompt(topic: string): string {
+  return `Write a distilled, high-converting blog post in markdown that feels human.
+
+Topic: ${topic}
+
+GOAL:
+Help the reader understand one real problem quickly, feel understood, and leave with one clear next step plus one recommended tool.
+
+STRUCTURE:
+
+1. Strong opening that names the frustration or tension fast
+2. Why most people get stuck
+3. What actually works
+4. 3-5 practical takeaways or steps
+5. One simple real-life example or mini-scenario
+6. ## Recommended Tool
+7. ## Final Thoughts
+8. ## Call To Action
+
+RULES:
+
+- Write like one real person talking to one reader.
+- Use simple everyday language.
+- Short paragraphs (1-3 lines).
+- Mix short paragraphs, bullets, and occasional one-line emphasis.
+- Focus on real-life situations.
+- Make the reader feel understood.
+- Keep the article distilled and skimmable.
+- Each section should start with a clear point, explain why it matters, then move on.
+- You may use 1-3 short fenced \`text\` blocks for quick frameworks, before/after contrasts, or simple formulas.
+- Do NOT sound like AI or generic advice.
+- Do NOT add notes about summaries, word limits, prompts, or how the article was generated.
+- Do NOT invent statistics, sources, quotes, or case studies.
+
+CONVERSION RULES:
+
+- In "Recommended Tool":
+  - Introduce ONE tool naturally.
+  - Explain WHY it helps in real life, not just features.
+  - Keep it honest. No hype.
+  - You MUST clearly recommend ONE best option and explain why it is the easiest or safest choice for most people.
+  - Explain how the tool saves time, reduces effort, or removes confusion.
+
+- In CTA:
+  - Ask a direct question.
+  - Encourage one small action.
+  - Encourage sharing or saving.
+  - Encourage the reader to start now, not later, without fake urgency.
+
+- Tone & Style:
+  - Sound direct, grounded, and conversational.
+  - Slightly imperfect is better than robotic.
+  - Use "you" often.
+  - Add small emotional cues like frustration, relief, or momentum.
+  - Prefer concrete details over abstract explanation.
+  - Avoid these phrases: "In today's world", "It is important to note", "In conclusion", "delve", "unlock", "navigate".
+
+- Include EXACT sentence:
+"This article may contain affiliate links."
+
+- No HTML or JSX
+- 800-1200 words
+
+Return only the markdown article.`;
 }
 
 async function requestMarkdown(
   topic: string,
   reviewMatch: ReviewMatch | null
 ): Promise<{ markdown: string; usedFallback: boolean }> {
+  const compiledPrompt = reviewMatch
+    ? buildReviewPrompt(topic, reviewMatch.entry)
+    : buildStandardPrompt(topic);
+
   const prompt = reviewMatch
     ? `Write a high-converting product comparison article.
 
@@ -824,6 +1160,7 @@ CONVERSION RULES:
 - 800–1200 words
 
 Return only the markdown article.`;
+  void prompt;
 
   try {
     const response = await fetch(OLLAMA_URL, {
@@ -831,7 +1168,7 @@ Return only the markdown article.`;
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: MODEL,
-        prompt,
+        prompt: compiledPrompt,
         stream: false,
       }),
     });
@@ -855,6 +1192,17 @@ Return only the markdown article.`;
     return { markdown: buildFallbackMarkdown(topic, reviewMatch), usedFallback: true };
   }
 }
+
+// Keep legacy helpers referenced while the new generation path fully replaces them.
+void [
+  optimizeTitle,
+  injectHook,
+  pickTopic,
+  ensureStandardSections,
+  ensureReviewSections,
+  buildStandardFallbackMarkdown,
+  buildReviewFallbackMarkdown,
+];
 
 function getOutputDir(): string {
   const configured = process.env.POSTS_DIR || DEFAULT_POSTS_DIR;
@@ -1257,16 +1605,19 @@ async function generatePost(topic: string, dryRun: boolean, existingPosts: Exist
 
   const extractedTitle = extractTitle(markdown, primaryTitle);
   let title = reviewMatch?.entry.reviewTitle || extractedTitle;
-  title = optimizeTitle(title);
-  const baseContent =
+  title = refineTitle(title);
+  const baseContent = normalizeRequiredSectionHeadings(
     cleanContent(markdown, extractedTitle) ||
-    cleanContent(buildFallbackMarkdown(topic, reviewMatch), title);
-  
+      cleanContent(buildFallbackMarkdown(topic, reviewMatch), title),
+    reviewMatch
+      ? ['Quick Comparison Table', 'Best Overall', 'Pros and Cons', 'Final Recommendation', 'Final Thoughts', 'Call To Action']
+      : ['Recommended Tool', 'Final Thoughts', 'Call To Action']
+  );
+
   let cleanedContent = reviewMatch
-    ? ensureReviewSections(baseContent, reviewMatch.entry)
-    : ensureStandardSections(baseContent, title, topic);
-  
-  cleanedContent = injectHook(cleanedContent);
+    ? ensureHumanReviewSections(baseContent, reviewMatch.entry)
+    : ensureHumanStandardSections(baseContent, title, topic);
+
   cleanedContent = removeDuplicateSections(cleanedContent);
   const keyword = reviewMatch?.entry.reviewTitle || titleCase(topic);
   const tags = getTags(title, keyword, cleanedContent);
@@ -1307,7 +1658,7 @@ async function main(): Promise<void> {
     const plannedTopics = planTopics(options, existingPosts, getTopicUsage());
 
     if (plannedTopics.length === 0) {
-      console.log('[generate-post] No eligible topics found. Existing posts already cover the current topic pool.');
+      console.log('[generate-post] No eligible topics found. Existing posts already cover the current topic pool. Add topics in data/topic-clusters.json or run: npm run generate -- --topic "your new topic"');
       return;
     }
 

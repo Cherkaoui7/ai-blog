@@ -1,20 +1,28 @@
 'use client';
+
 import { useState } from 'react';
+import { getSafeRedirectPath } from '@/lib/request';
 
 export default function LoginPage() {
   const [password, setPassword] = useState('');
-  const [error, setError] = useState(false);
+  const [error, setError] = useState('');
 
   async function handleLogin() {
     const res = await fetch('/api/auth/login', {
+      cache: 'no-store',
+      credentials: 'same-origin',
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ password }),
     });
+
+    const data = await res.json().catch(() => null);
+
     if (res.ok) {
-      window.location.href = '/pipeline';
+      const nextPath = new URLSearchParams(window.location.search).get('next');
+      window.location.href = getSafeRedirectPath(nextPath, '/pipeline');
     } else {
-      setError(true);
+      setError(data?.error || 'Wrong password');
     }
   }
 
@@ -27,7 +35,8 @@ export default function LoginPage() {
         <input
           type="password"
           value={password}
-          onChange={e => { setPassword(e.target.value); setError(false); }}
+          autoComplete="current-password"
+          onChange={e => { setPassword(e.target.value); setError(''); }}
           onKeyDown={e => e.key === 'Enter' && handleLogin()}
           placeholder="Password"
           style={{ width: '100%', padding: '12px 16px', background: '#1a1a1a',
@@ -35,7 +44,7 @@ export default function LoginPage() {
             color: '#fff', fontSize: 15, outline: 'none', boxSizing: 'border-box',
             marginBottom: 10, fontFamily: 'inherit' }}
         />
-        {error && <p style={{ color: '#f87171', fontSize: 13, marginBottom: 10 }}>Wrong password</p>}
+        {error && <p style={{ color: '#f87171', fontSize: 13, marginBottom: 10 }}>{error}</p>}
         <button onClick={handleLogin} style={{ width: '100%', padding: '12px',
           background: '#fff', color: '#000', border: 'none', borderRadius: 10,
           fontSize: 15, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>

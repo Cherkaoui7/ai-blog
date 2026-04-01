@@ -43,8 +43,31 @@ function normalizeValue(value: string): string {
     .trim();
 }
 
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function sanitizeExternalUrl(value: string): string {
+  try {
+    const url = new URL(value);
+
+    if (url.protocol === 'http:' || url.protocol === 'https:') {
+      return url.toString();
+    }
+  } catch {
+    // Fall through to the safe fallback below.
+  }
+
+  return '#';
+}
+
 function renderAffiliateLink(entry: AffiliateEntry): string {
-  return `<a href="${entry.url}" target="_blank" rel="nofollow sponsored noopener">${entry.label}</a>`;
+  return `<a href="${sanitizeExternalUrl(entry.url)}" target="_blank" rel="nofollow sponsored noopener">${escapeHtml(entry.label)}</a>`;
 }
 
 function escapeRegExp(value: string): string {

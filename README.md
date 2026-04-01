@@ -69,6 +69,9 @@ Use these only if you need the related feature:
 GITHUB_TOKEN=your_github_token
 GITHUB_REPO=your-username/your-repo
 VERCEL_DEPLOY_HOOK=optional_vercel_hook
+AUTH_SECRET=optional_but_recommended_for_signed_admin_sessions
+SECURITY_CONTACT=mailto:security@example.com
+SECURITY_POLICY_URL=https://your-domain.example/security
 
 NEXT_PUBLIC_ADSENSE_CLIENT=optional
 NEXT_PUBLIC_ADSENSE_LIST_SLOT=optional

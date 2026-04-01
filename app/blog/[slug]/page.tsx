@@ -4,6 +4,8 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { MDXRemote } from 'next-mdx-remote/rsc';
 import Link from 'next/link';
+import rehypeSanitize from 'rehype-sanitize';
+import remarkGfm from 'remark-gfm';
 import { authors } from '@/lib/authors';
 import { AdSlot } from '@/app/components/AdSlot';
 import { EmailCapture } from '@/components/EmailCapture';
@@ -173,7 +175,15 @@ export default async function PostPage({ params }: PageProps<'/blog/[slug]'>) {
         )}
 
         <div className="prose">
-          <MDXRemote source={post.content} />
+          <MDXRemote
+            source={post.content}
+            options={{
+              mdxOptions: {
+                remarkPlugins: [remarkGfm],
+                rehypePlugins: [rehypeSanitize],
+              },
+            }}
+          />
         </div>
 
         {articleBottomAdSlot && (

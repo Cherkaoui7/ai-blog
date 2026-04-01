@@ -2,7 +2,17 @@
 import Link from 'next/link';
 import { formatDate } from '@/lib/utils';
 
-export function FeaturedCard({ post }: { post: any }) {
+type PostCardPost = {
+  author?: string;
+  date: string;
+  description: string;
+  readTime?: string;
+  slug: string;
+  tags?: string[];
+  title: string;
+};
+
+export function FeaturedCard({ post }: { post: PostCardPost }) {
   return (
     <Link href={`/blog/${post.slug}`} style={{ display: 'block', marginBottom: '3rem' }}>
       <div
@@ -35,7 +45,7 @@ export function FeaturedCard({ post }: { post: any }) {
   );
 }
 
-export function PostCard({ post }: { post: any }) {
+export function PostCard({ post }: { post: PostCardPost }) {
   return (
     <Link href={`/blog/${post.slug}`}>
       <div

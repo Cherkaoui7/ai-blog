@@ -2,6 +2,11 @@
 
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { headers } from 'next/headers';
+import { logSecurityEvent, logServerError } from '@/lib/logger';
+import { getClientIp } from '@/lib/request';
+import { checkRateLimit } from '@/lib/rate-limit';
+import { emailCaptureSchema } from '@/lib/validation';
 
 export type EmailCaptureState = {
   status: 'idle' | 'success' | 'error';
@@ -60,6 +65,15 @@ async function savePlaceholderSignup(email: string, source: string) {
 async function sendToMailchimp(email: string, source: string) {
   const action = process.env.MAILCHIMP_FORM_ACTION;
   if (!action) return false;
+  const url = new URL(action);
+
+  if (!['http:', 'https:'].includes(url.protocol)) {
+    throw new Error('Mailchimp form action must use HTTP or HTTPS.');
+  }
+
+  if (process.env.NODE_ENV === 'production' && url.protocol !== 'https:') {
+    throw new Error('Mailchimp form action must use HTTPS in production.');
+  }
 
   const params = new URLSearchParams();
   params.set(process.env.MAILCHIMP_EMAIL_FIELD || 'EMAIL', email);
@@ -73,6 +87,7 @@ async function sendToMailchimp(email: string, source: string) {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: params.toString(),
+    signal: AbortSignal.timeout(5_000),
     cache: 'no-store',
   });
 
@@ -88,17 +103,39 @@ export async function submitEmailCapture(
   _prevState: EmailCaptureState,
   formData: FormData
 ): Promise<EmailCaptureState> {
+  const requestHeaders = await headers();
+  const clientIp = getClientIp(requestHeaders);
+  const rateLimit = checkRateLimit({
+    key: `email-capture:${clientIp}`,
+    limit: 5,
+    windowMs: 60 * 60 * 1000,
+  });
   const email = normalizeEmail(formData.get('email'));
+  const parsedInput = emailCaptureSchema.safeParse({
+    email,
+    source,
+  });
 
-  if (!isValidEmail(email)) {
+  if (rateLimit.limited) {
+    logSecurityEvent('email_capture_rate_limited', { ip: clientIp });
+
+    return {
+      status: 'error',
+      message: 'Too many signup attempts. Try again later.',
+    };
+  }
+
+  if (!parsedInput.success || !isValidEmail(email)) {
     return {
       status: 'error',
       message: 'Enter a valid email address.',
     };
   }
 
+  const safeSource = parsedInput.data.source;
+
   try {
-    const submittedToMailchimp = await sendToMailchimp(email, source);
+    const submittedToMailchimp = await sendToMailchimp(email, safeSource);
 
     if (submittedToMailchimp) {
       return {
@@ -107,15 +144,19 @@ export async function submitEmailCapture(
       };
     }
 
-    const result = await savePlaceholderSignup(email, source);
+    const result = await savePlaceholderSignup(email, safeSource);
 
     return {
       status: 'success',
       message: result.created
         ? 'Thanks. Your email was saved in placeholder mode.'
         : 'This email is already saved in placeholder mode.',
-    };
+      };
   } catch (error) {
+    logServerError('email_capture_failed', error, {
+      ip: clientIp,
+      source: safeSource,
+    });
     const message = error instanceof Error ? error.message : String(error);
 
     return {
