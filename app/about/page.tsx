@@ -112,8 +112,7 @@ export default function AboutPage() {
                     fontSize: '0.75rem',
                     color: 'var(--text-meta, #9191a0)',
                   }}>
-                    <span>{author.twitter}</span>
-                    <span>LinkedIn: {author.linkedin}</span>
+                    
                   </div>
                 </div>
               </div>

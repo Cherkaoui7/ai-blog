@@ -65,12 +65,56 @@ type ParsedPost = Omit<Post, 'relatedPosts'> & {
  * These are internal generation artifacts that shouldn't be visible to readers.
  */
 function cleanArticleContent(content: string, _title: string): string {
-  return content
+  let cleaned = content
     .replace(/^\*\*Agent:\s*.+?\*\*\s*$/gm, '')
     .replace(/^#\s+.+$/m, '')
     .replace(/^\s*This article may contain affiliate links\.?.*$/gim, '')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim();
+    .replace(/^###?\s*(?:Call To Action|CTA|Conclusion|Summary)\b[\s\S]*$/im, '') 
+    .replace(/\*\*Call To Action\b[\s\S]*$/im, '')
+    .replace(/Welcome to today's briefing\.?/gi, '')
+    .replace(/In today's briefing,?/gi, '')
+    .replace(/As an AI,?/gi, '')
+    .replace(/In conclusion,?/gi, '')
+    .replace(/Today's briefing,?/gi, '')
+    .replace(/^##\s*Key Takeaways\s*\n(?:[-*]\s+.*\n?)*\n?/im, '')
+    .replace(/^###\s+(?:H3\s*)?(.+)$/gm, '\n**$1**\n');
+
+  const faqRegex = /(?:^|\n)##\s*FAQ\s*\n([\s\S]*?)(?=\n##\s|$)/i;
+  const faqMatch = cleaned.match(faqRegex);
+  
+  if (faqMatch) {
+    const faqRaw = faqMatch[1];
+    let newFaq = '\n<FAQAccordion>\n';
+    let currentQ = '';
+    let currentA = '';
+    
+    const lines = faqRaw.split('\n');
+    for (let i = 0; i < lines.length; i++) {
+       const line = lines[i].trim();
+       if ((line.startsWith('**') && line.endsWith('**')) || (line.startsWith('**Q') && line.includes('**'))) {
+           if (currentQ) {
+               newFaq += `  <FAQItem question="${currentQ.replace(/"/g, '&quot;')}">\n    ${currentA.trim()}\n  </FAQItem>\n`;
+           }
+           if (line.startsWith('**Q') && line.includes('**') && !line.endsWith('**')) {
+               currentQ = line.replace(/^\*\*(.+?)\*\*.*$/, '$1').trim();
+               currentA = line.replace(/^\*\*.+?\*\*(.*)$/, '$1').trim();
+           } else {
+               currentQ = line.replace(/^\*\*(.+)\*\*$/, '$1').trim();
+               currentA = '';
+           }
+       } else if (line.length > 0) {
+           currentA += line + '\n';
+       }
+    }
+    if (currentQ) {
+       newFaq += `  <FAQItem question="${currentQ.replace(/"/g, '&quot;')}">\n    ${currentA.trim()}\n  </FAQItem>\n`;
+    }
+    newFaq += '</FAQAccordion>\n';
+    
+    cleaned = cleaned.replace(faqRegex, `\n## FAQ\n${newFaq}\n\n`);
+  }
+
+  return cleaned.replace(/\n{3,}/g, '\n\n').trim();
 }
 
 /** Extract Key Takeaways bullet points from the MDX content. */
