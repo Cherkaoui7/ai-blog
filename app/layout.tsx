@@ -29,6 +29,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             position: 'sticky',
             top: 0,
             zIndex: 50,
+            backdropFilter: 'blur(12px)',
           }}
         >
           <div
@@ -42,10 +43,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               height: 60,
             }}
           >
-            <Link href="/" style={{ fontWeight: 700, fontSize: '1.1rem', letterSpacing: '-0.02em' }}>
+            <Link href="/" style={{ fontWeight: 700, fontSize: '1.1rem', letterSpacing: '-0.02em', color: 'var(--text)' }}>
               <span style={{ color: 'var(--accent)' }}>Pulse</span> Editorial
             </Link>
-            <nav style={{ display: 'flex', gap: '1.5rem', fontSize: 14, color: 'var(--muted)' }}>
+            <nav style={{ display: 'flex', gap: '1.5rem', fontSize: '0.875rem', color: 'var(--text-secondary, #a1a1aa)' }}>
               <Link href="/" style={{ transition: 'color .15s' }}>
                 Home
               </Link>
@@ -72,8 +73,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               alignItems: 'center',
               flexWrap: 'wrap',
               gap: '1rem',
-              fontSize: 13,
-              color: 'var(--muted)',
+              fontSize: '0.8125rem',
+              color: 'var(--text-meta, #9191a0)',
             }}
           >
             <span>&copy; {new Date().getFullYear()} Pulse Editorial. Written by our team of specialists.</span>

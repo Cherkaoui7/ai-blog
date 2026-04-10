@@ -63,6 +63,7 @@ const nicheKeywords: Record<Author['niche'], string[]> = {
     'money', 'finance', 'invest', 'budget', 'saving', 'income', 'debt',
     'credit', 'tax', 'retirement', 'stock', 'crypto', 'bank', 'mortgage',
     'frugal', 'wealth', 'salary', 'side hustle', 'passive income', 'financial',
+    'finops', 'cost management', 'cost intelligence', 'spend', 'pricing',
   ],
   health: [
     'health', 'fitness', 'nutrition', 'exercise', 'diet', 'mental health',

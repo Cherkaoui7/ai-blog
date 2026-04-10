@@ -3,6 +3,7 @@ import path from 'path';
 import matter from 'gray-matter';
 import { applyAffiliateMonetization } from '@/lib/affiliate';
 import { getTopicClusterMatch } from '@/lib/topic-clusters';
+import { detectNiche } from '@/lib/authors';
 
 const POSTS_DIRS = [
   path.join(process.cwd(), 'posts'),
@@ -31,11 +32,14 @@ export type Post = {
   keyword: string;
   image: string;
   readTime: string;
+  wordCount: number;
   author: string;
   authorTitle: string;
   niche: string;
   lastUpdated: string;
   content: string;
+  keyTakeaways: string[];
+  heroQuote: string;
   relatedPosts: RelatedPost[];
 };
 
@@ -55,6 +59,48 @@ type ParsedPost = Omit<Post, 'relatedPosts'> & {
   clusterKey: string;
   filePath: string;
 };
+
+/**
+ * Strip "Agent: ..." prefix lines and in-body H1 duplicates from MDX content.
+ * These are internal generation artifacts that shouldn't be visible to readers.
+ */
+function cleanArticleContent(content: string, _title: string): string {
+  return content
+    .replace(/^\*\*Agent:\s*.+?\*\*\s*$/gm, '')
+    .replace(/^#\s+.+$/m, '')
+    .replace(/^\s*This article may contain affiliate links\.?.*$/gim, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+/** Extract Key Takeaways bullet points from the MDX content. */
+function extractKeyTakeaways(content: string): string[] {
+  const match = content.match(/##\s*Key Takeaways\s*\n([\s\S]*?)(?=\n##\s|$)/);
+  if (!match) return [];
+  return match[1]
+    .split('\n')
+    .map(line => line.replace(/^[-*]\s+/, '').trim())
+    .filter(line => line.length > 0);
+}
+
+/** Pick the strongest sentence from the article intro for a hero quote. */
+function extractHeroQuote(content: string): string {
+  // Get the first substantial paragraph (not headings, not lists)
+  const paragraphs = content
+    .split('\n\n')
+    .map(p => p.trim())
+    .filter(p => p.length > 60 && !p.startsWith('#') && !p.startsWith('-') && !p.startsWith('*') && !p.startsWith('```') && !p.startsWith('**Agent'));
+
+  if (paragraphs.length === 0) return '';
+
+  // Pick the first paragraph, find the strongest sentence (longest with a clear statement)
+  const sentences = paragraphs[0]
+    .replace(/\*\*/g, '')
+    .split(/(?<=[.!?])\s+/)
+    .filter(s => s.length > 30 && s.length < 200);
+
+  return sentences.length > 0 ? sentences[0] : '';
+}
 
 function asString(value: unknown): string {
   return typeof value === 'string' ? value.trim() : '';
@@ -224,34 +270,40 @@ function getPostFiles(): { slug: string; filePath: string }[] {
 function readPostFile(slug: string, filePath: string): ParsedPost {
   const raw = fs.readFileSync(filePath, 'utf-8');
   const { data, content: rawContent } = matter(raw);
-  const content = normalizeSpacing(rawContent);
+  const rawNormalized = normalizeSpacing(rawContent);
+  const postTitle = asString(data.title) || slug;
+  const content = cleanArticleContent(rawNormalized, postTitle);
   const keyword = asString(data.keyword);
-  const tags = getPostTags(asString(data.title) || slug, keyword, asStringArray(data.tags), content);
+  const tags = getPostTags(postTitle, keyword, asStringArray(data.tags), content);
   const description = asString(data.description) || getPostDescription(content);
   const clusterMatch = getTopicClusterMatch(
-    asString(data.title) || slug,
+    postTitle,
     keyword,
     description,
     tags.join(' '),
     content
   );
+  const words = countWords(content);
 
   return {
     slug,
     clusterKey: clusterMatch?.key || '',
     filePath,
-    title: asString(data.title) || slug,
+    title: postTitle,
     description,
     date: asString(data.date) || new Date().toISOString(),
     tags,
     keyword,
     image: asString(data.image),
-    readTime: normalizeReadTime(asString(data.readTime), content),
+    readTime: `${Math.max(1, Math.ceil(words / 200))} min read`,
+    wordCount: words,
     author: asString(data.author) || 'Pulse Editorial',
     authorTitle: asString(data.authorTitle),
-    niche: asString(data.niche),
+    niche: asString(data.niche) || detectNiche(`${postTitle} ${keyword} ${asStringArray(data.tags).join(' ')}`),
     lastUpdated: asString(data.lastUpdated) || asString(data.date) || new Date().toISOString(),
     content,
+    keyTakeaways: extractKeyTakeaways(rawNormalized),
+    heroQuote: extractHeroQuote(rawNormalized),
   };
 }
 
@@ -365,6 +417,9 @@ async function loadPosts(): Promise<Post[]> {
       niche: post.niche,
       lastUpdated: post.lastUpdated,
       content: injectRelatedLinks(applyAffiliateMonetization(post), relatedPosts),
+      keyTakeaways: post.keyTakeaways,
+      heroQuote: post.heroQuote,
+      wordCount: post.wordCount,
       relatedPosts,
     };
   });

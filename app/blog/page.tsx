@@ -1,7 +1,7 @@
 import { getAllPosts } from '@/lib/posts';
-import { PostCard } from '../components/PostCard';
 import type { Metadata } from 'next';
 import { AdSlot } from '../components/AdSlot';
+import { ArticlesContent } from './ArticlesContent';
 
 export async function generateMetadata(): Promise<Metadata> {
   const posts = await getAllPosts();
@@ -30,12 +30,37 @@ export default async function BlogPage() {
 
   return (
     <div style={{ maxWidth: 1100, margin: '0 auto', padding: '3rem 1.5rem' }}>
-      <h1 style={{ fontSize: '2rem', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: '0.5rem' }}>
-        All Articles
-      </h1>
-      <p style={{ color: 'var(--muted)', fontSize: '1rem', lineHeight: 1.6, marginBottom: '2rem' }}>
-        Expert-written insights across tech, finance, health and education.
-      </p>
+      {/* Header */}
+      <div style={{ marginBottom: '2rem' }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.75rem', marginBottom: '0.5rem' }}>
+          <h1 style={{
+            fontSize: '2.25rem',
+            fontWeight: 700,
+            letterSpacing: '-0.025em',
+            color: 'var(--text)',
+            lineHeight: 1.2,
+          }}>
+            All Articles
+          </h1>
+          <span style={{
+            fontSize: '0.8125rem',
+            fontWeight: 600,
+            color: 'var(--accent)',
+            background: 'var(--accent-subtle, #1e1835)',
+            padding: '2px 10px',
+            borderRadius: 999,
+          }}>
+            {posts.length}
+          </span>
+        </div>
+        <p style={{
+          color: 'var(--text-secondary, #a1a1aa)',
+          fontSize: '1rem',
+          lineHeight: 1.6,
+        }}>
+          Expert-written insights across tech, finance, health and education.
+        </p>
+      </div>
 
       {listingAdSlot && (
         <div style={{ marginBottom: '2rem' }}>
@@ -44,13 +69,15 @@ export default async function BlogPage() {
       )}
 
       {posts.length === 0 ? (
-        <p style={{ color: 'var(--muted)', textAlign: 'center', padding: '3rem 0' }}>
+        <p style={{
+          color: 'var(--text-meta, #9191a0)',
+          textAlign: 'center',
+          padding: '3rem 0',
+        }}>
           No articles published yet. Check back soon!
         </p>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem' }}>
-          {posts.map(post => <PostCard key={post.slug} post={post} />)}
-        </div>
+        <ArticlesContent posts={posts} />
       )}
     </div>
   );
