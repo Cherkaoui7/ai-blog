@@ -200,8 +200,8 @@ export default function AboutPage() {
               gap: '1rem',
             }}>
               {[
-                { value: '4', label: 'Expert writers' },
-                { value: '500+', label: 'Articles published' },
+                { value: '5', label: 'Expert writers' },
+                { value: '100+', label: 'Articles published' },
                 { value: '4', label: 'Topic pillars' },
                 { value: '10K+', label: 'Monthly readers' },
               ].map((stat) => (
