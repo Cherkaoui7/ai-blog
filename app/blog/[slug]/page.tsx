@@ -5,11 +5,13 @@ import { notFound } from 'next/navigation';
 import { MDXRemote } from 'next-mdx-remote/rsc';
 import Link from 'next/link';
 import remarkGfm from 'remark-gfm';
+import rehypeHighlight from 'rehype-highlight';
 import { authors } from '@/lib/authors';
 import { AdSlot } from '@/app/components/AdSlot';
 import { EmailCapture } from '@/components/EmailCapture';
 import { ReadingProgress, TLDRCard, ShareBar } from '@/app/components/ArticleInteractive';
 import { FAQAccordion, FAQItem } from '@/app/components/FAQAccordion';
+import { InsightBlock, WarningBlock } from '@/app/components/HighlightBlocks';
 
 export async function generateStaticParams() {
   const posts = await getAllPosts();
@@ -286,10 +288,11 @@ export default async function PostPage({ params }: PageProps<'/blog/[slug]'>) {
           <div className="prose">
             <MDXRemote
               source={post.content}
-              components={{ FAQAccordion, FAQItem }}
+              components={{ FAQAccordion, FAQItem, InsightBlock, WarningBlock }}
               options={{
                 mdxOptions: {
-                  remarkPlugins: [remarkGfm]
+                  remarkPlugins: [remarkGfm],
+                  rehypePlugins: [rehypeHighlight]
                 },
               }}
             />

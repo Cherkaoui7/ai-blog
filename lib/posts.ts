@@ -65,21 +65,10 @@ type ParsedPost = Omit<Post, 'relatedPosts'> & {
  * These are internal generation artifacts that shouldn't be visible to readers.
  */
 function cleanArticleContent(content: string, _title: string): string {
-  let cleaned = content
-    .replace(/^\*\*Agent:\s*.+?\*\*\s*$/gm, '')
-    .replace(/^#\s+.+$/m, '')
-    .replace(/^\s*This article may contain affiliate links\.?.*$/gim, '')
-    .replace(/^###?\s*(?:Call To Action|CTA|Conclusion|Summary)\b[\s\S]*$/im, '') 
-    .replace(/\*\*Call To Action\b[\s\S]*$/im, '')
-    .replace(/Welcome to today's briefing\.?/gi, '')
-    .replace(/In today's briefing,?/gi, '')
-    .replace(/As an AI,?/gi, '')
-    .replace(/In conclusion,?/gi, '')
-    .replace(/Today's briefing,?/gi, '')
-    .replace(/^##\s*Key Takeaways\s*\n(?:[-*]\s+.*\n?)*\n?/im, '')
-    .replace(/^###\s+(?:H3\s*)?(.+)$/gm, '\n**$1**\n');
+  let cleaned = content;
 
-  const faqRegex = /(?:^|\n)##\s*FAQ\s*\n([\s\S]*?)(?=\n##\s|$)/i;
+  // 1. Process FAQs first before bold text formatting breaks the question structure
+  const faqRegex = /(?:^|\n)##\s*(?:❓\s*)?FAQ\s*\n([\s\S]*?)(?=\n##\s|$)/i;
   const faqMatch = cleaned.match(faqRegex);
   
   if (faqMatch) {
@@ -111,8 +100,38 @@ function cleanArticleContent(content: string, _title: string): string {
     }
     newFaq += '</FAQAccordion>\n';
     
-    cleaned = cleaned.replace(faqRegex, `\n## FAQ\n${newFaq}\n\n`);
+    cleaned = cleaned.replace(faqRegex, `\n## ❓ FAQ\n${newFaq}\n\n`);
   }
+
+  // 2. Perform all standard string replacements
+  cleaned = cleaned
+    .replace(/^\*\*Agent:\s*.+?\*\*\s*$/gm, '')
+    .replace(/^#\s+.+$/m, '')
+    .replace(/^\s*This article may contain affiliate links\.?.*$/gim, '')
+    .replace(/^###?\s*(?:Call To Action|CTA|Conclusion|Summary)\b[\s\S]*$/im, '') 
+    .replace(/\*\*Call To Action\b[\s\S]*$/im, '')
+    .replace(/Welcome to today's briefing\.?/gi, '')
+    .replace(/In today's briefing,?/gi, '')
+    .replace(/As an AI,?/gi, '')
+    .replace(/In conclusion,?/gi, '')
+    .replace(/Today's briefing,?/gi, '')
+    .replace(/^##\s*Key Takeaways\s*\n(?:[-*]\s+.*\n?)*\n?/im, '')
+    // Only convert H3s that have old "H3" label prefix to bold; keep clean H3s
+    .replace(/^###\s+H3\s+(.+)$/gm, '\n#### $1\n')
+    // Convert standalone bold-only lines into H4 sub-headings
+    .replace(/^\*\*([^*]+)\*\*$/gm, '#### $1');
+
+  // Convert 👉 Key Insight: lines into InsightBlock components
+  cleaned = cleaned.replace(
+    /^👉\s*(?:\*\*)?Key Insight(?:\*\*)?[:\s]+(.+)$/gm,
+    '<InsightBlock>$1</InsightBlock>'
+  );
+
+  // Convert ⚠️ Warning: lines into WarningBlock components
+  cleaned = cleaned.replace(
+    /^⚠️\s*(?:\*\*)?Warning(?:\*\*)?[:\s]+(.+)$/gm,
+    '<WarningBlock>$1</WarningBlock>'
+  );
 
   return cleaned.replace(/\n{3,}/g, '\n\n').trim();
 }
@@ -427,7 +446,7 @@ function injectRelatedLinks(content: string, relatedPosts: RelatedPost[]): strin
     .join('\n');
 
   const relatedBlock = `## Related reading\n\n${links}`;
-  const trailingSectionMatch = normalized.match(/\n##\s+(Recommended Tool|Final Thoughts|Call To Action)\b/i);
+  const trailingSectionMatch = normalized.match(/\n##\s+(?:🎯\s+)?(?:Recommended Tool|Final Thoughts|Call To Action|Conclusion)\b/i);
 
   if (trailingSectionMatch?.index) {
     const insertionPoint = trailingSectionMatch.index + 1;

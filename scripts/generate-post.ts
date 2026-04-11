@@ -134,25 +134,42 @@ function titleCase(value: string): string {
 }
 
 function optimizeTitle(title: string): string {
-  if (/\d+/.test(title)) return title;
+  // If already has emoji prefix, keep it
+  if (/^[\u{1F300}-\u{1FAD6}]/u.test(title)) return title;
 
-  return `7 Simple Ways to ${title.replace(/^(how to|ways to)/i, '').trim()} (Even If You’re Busy)`;
+  // Clean the title of filler patterns
+  const cleaned = title
+    .replace(/^(how to|ways to|a guide to|the guide to)/i, '')
+    .replace(/\(even if you're busy\)/i, '')
+    .replace(/^7 simple ways to /i, '')
+    .trim();
+
+  // Build power-phrase format: 🚀 Power Verb: Topic
+  return `🚀 ${titleCase(cleaned)}`;
 }
 
 function injectHook(content: string): string {
-  const hook = `You start strong… then life gets busy, and everything falls apart.
+  // Don't inject if content already starts with a strong opening
+  const firstLine = content.split('\n')[0]?.trim() || '';
+  if (
+    firstLine.length > 40 ||
+    /^[\u{1F300}-\u{1FAD6}]/u.test(firstLine) ||
+    /^(most |the real |you |everyone )/i.test(firstLine)
+  ) {
+    return content;
+  }
 
-Sound familiar?
+  const hook = `Most people get this wrong — and it costs them weeks of wasted effort.
+
+Here's what actually works.
 
 `;
-
-  if (content.startsWith(hook)) return content;
 
   return hook + content;
 }
 
 function removeDuplicateSections(content: string): string {
-  const sections = ['Recommended Tool', 'Final Thoughts', 'Call To Action'];
+  const sections = ['Recommended Tool', 'Final Thoughts', 'Call To Action', '\u{1F3AF} Conclusion', '\u{1F4CA} Quick Comparison', '\u{1F3C6} Best Overall'];
   let updated = content;
 
   for (const section of sections) {
@@ -763,47 +780,33 @@ function buildReviewFallbackMarkdown(entry: ReviewTopicEntry): string {
 }
 
 function ensureHumanStandardSections(content: string, title: string, topic: string): string {
-  const recommendedToolBody = [
-    '> This article may contain affiliate links.',
-    '',
-    `If you want the easiest way to apply "${title}" in real life, use a tool that makes the next step obvious.`,
-    '',
-    'The best pick is usually not the most powerful one. It is the one you will still use on a tired Tuesday.',
-    '',
-    'Choose something that reduces friction, saves time, or removes guesswork. Skip anything that makes the process feel heavier.',
-  ].join('\n');
-
-  const finalThoughtsBody = [
+  const conclusionBody = [
     `The best results with ${topic.toLowerCase()} usually come from clarity and repetition, not one perfect burst of motivation.`,
     '',
     'If the system only works on your best days, it is not a real system yet. Keep trimming the friction until it fits normal life.',
-  ].join('\n');
-
-  const callToActionBody = [
+    '',
+    '> This article may contain affiliate links.',
+    '',
     `What's the part of "${title}" that usually falls apart first?`,
     '',
-    'Pick one small step today, try the tool mentioned above if it helps, and give the new setup a real week before judging it.',
+    'Pick one small step today, and give the new setup a real week before judging it.',
     '',
     'If this gave you one useful idea, save it or share it with someone who is stuck in the same cycle.',
     '',
     'Small wins count more than clean plans that never get used.',
   ].join('\n');
 
-  let normalized = ensureSection(content, 'Recommended Tool', recommendedToolBody);
-  normalized = ensureSection(normalized, 'Final Thoughts', finalThoughtsBody);
-  normalized = ensureSection(normalized, 'Call To Action', callToActionBody);
+  let normalized = ensureSection(content, '\u{1F3AF} Conclusion', conclusionBody);
 
   return ensureAffiliateDisclosure(normalized);
 }
 
 function ensureHumanReviewSections(content: string, entry: ReviewTopicEntry): string {
-  const finalThoughtsBody = [
+  const conclusionBody = [
     'A useful review should make the decision easier, not give you five more tabs to keep open.',
     '',
     'Pick the tool that matches how you already work, test it long enough to feel the friction, and only switch if it is still slowing you down.',
-  ].join('\n');
-
-  const callToActionBody = [
+    '',
     `What's the biggest thing making "${entry.reviewTitle}" harder than it should be right now?`,
     '',
     'Choose the clearest fit, test it this week, and avoid over-comparing once you already have a strong default option.',
@@ -813,12 +816,11 @@ function ensureHumanReviewSections(content: string, entry: ReviewTopicEntry): st
     'Momentum matters more than finding a tool that looks perfect on paper.',
   ].join('\n');
 
-  let normalized = ensureSection(content, 'Quick Comparison Table', stripSectionHeading(buildQuickComparisonTable(entry)));
-  normalized = ensureSection(normalized, 'Best Overall', stripSectionHeading(buildBestOverallSection(entry)));
-  normalized = ensureSection(normalized, 'Pros and Cons', stripSectionHeading(buildProsAndConsSection(entry)));
-  normalized = ensureSection(normalized, 'Final Recommendation', stripSectionHeading(buildRecommendationSection(entry)));
-  normalized = ensureSection(normalized, 'Final Thoughts', finalThoughtsBody);
-  normalized = ensureSection(normalized, 'Call To Action', callToActionBody);
+  let normalized = ensureSection(content, '\u{1F4CA} Quick Comparison', stripSectionHeading(buildQuickComparisonTable(entry)));
+  normalized = ensureSection(normalized, '\u{1F3C6} Best Overall', stripSectionHeading(buildBestOverallSection(entry)));
+  normalized = ensureSection(normalized, '\u{1F6E0}\uFE0F Pros and Cons', stripSectionHeading(buildProsAndConsSection(entry)));
+  normalized = ensureSection(normalized, '\u{1F3AF} Final Recommendation', stripSectionHeading(buildRecommendationSection(entry)));
+  normalized = ensureSection(normalized, '\u{1F3AF} Conclusion', conclusionBody);
   normalized = injectProductLinks(normalizeSpacing(normalized), entry);
 
   return ensureAffiliateDisclosure(normalized);
@@ -831,7 +833,11 @@ function buildHumanStandardFallbackMarkdown(topic: string): string {
 
 ${title} sounds simple until real life gets involved. That is usually where things fall apart: not because you do not care, but because the system asks for too much at the wrong moment.
 
-## The Real Problem
+## \u{1F9E0} What is ${title}?
+
+${title} is the process of building a repeatable approach that works even when motivation is low. Most people overcomplicate it. The goal is a system that survives a busy week.
+
+## \u26A1 Why It Matters
 
 Most people do not fail because they are lazy. They fail because the plan is vague, the first step is annoying, and the system only works when motivation is high.
 
@@ -841,37 +847,60 @@ Too big -> easy to avoid
 Too perfect -> impossible to repeat
 \`\`\`
 
-That creates the same loop over and over: strong start, messy middle, then guilt. After a few rounds, the problem feels bigger than it really is.
+That creates the same loop over and over: strong start, messy middle, then guilt.
 
-## What Actually Works
+## \u{1F3D7}\uFE0F How It Works
 
 A better approach is usually smaller and less exciting. You lower the friction, make the first step obvious, and stop pretending you will always have extra time later.
 
-What helps most:
+## \u{1F6E0}\uFE0F Implementation
 
-- Set an easy baseline you can hit this week.
-- Measure progress in one simple way.
-- Make the target realistic enough that follow-through is likely.
+### Step 1 \u2014 Set a Baseline
 
-## A Simple System
+Set an easy baseline you can hit this week. Not an ideal target \u2014 a minimum viable action.
 
-Pick a realistic target, decide when it happens, and make the setup simple enough that you can still do it on a busy day.
+### Step 2 \u2014 Track One Metric
 
-For example, if the plan depends on a full hour, special energy, and perfect timing, it is fragile. If it fits into a normal day with clear cues, it survives.
+Measure progress in one simple way. A checklist, a tally, or a short note at the end of the day.
 
-## Recommended Tool
+### Step 3 \u2014 Adjust Weekly
 
-> This article may contain affiliate links.
+Make the target realistic enough that follow-through is likely. If you missed it, make it smaller.
 
-A simple checklist, tracker, or timer can help you stay consistent without turning the process into another project.
+## \u{1F512} Best Practices
 
-Pick the tool that makes the next step easier, not the one with the longest feature list. The right tool should reduce friction fast.
+\u{1F449} Key Insight: Pick a realistic target, decide when it happens, and make the setup simple enough that you can still do it on a busy day.
 
-## Final Thoughts
+If the plan depends on a full hour, special energy, and perfect timing, it is fragile. If it fits into a normal day with clear cues, it survives.
+
+## \u274C Common Mistakes
+
+\u26A0\uFE0F Warning: Do not build a system that only works on your best days. That is not a system \u2014 it is wishful thinking.
+
+- Starting too big and burning out in week one
+- Measuring the wrong thing (effort instead of consistency)
+- Changing the plan every few days instead of giving it time
+
+## \u{1F30D} Real-World Use Case
+
+Someone struggling with ${topic.toLowerCase()} started with a 10-minute daily block instead of a full hour. After two weeks, the habit stuck. They expanded to 20 minutes naturally, without forcing it.
+
+## \u2753 FAQ
+
+**What if I miss a day?**
+Just resume the next day. One missed day does not erase progress.
+
+**How long before I see results?**
+Most people notice a shift after 2-3 consistent weeks.
+
+**Do I need a special tool?**
+No. A notes app or simple checklist is enough to start.
+
+## \u{1F3AF} Conclusion
 
 Good systems are a little boring, and that is usually a good sign. They are easy to start, easy to repeat, and strong enough to survive a messy week.
 
-## Call To Action
+> This article may contain affiliate links.
 
 What's the part of "${title}" that usually breaks first?
 
@@ -893,27 +922,46 @@ function buildHumanReviewFallbackMarkdown(entry: ReviewTopicEntry): string {
     '',
     'This comparison focuses on what actually matters in real use: how fast you can decide, how easy the tool is to stick with, and where the tradeoffs show up.',
     '',
-    buildQuickComparisonTable(entry),
-    '',
-    buildBestOverallSection(entry),
-    '',
-    '## What Actually Matters',
+    '## \u{1F9E0} What to Look For',
     '',
     'Start with the one job you need the tool to do really well. Some people need stronger structure. Others just need a simpler workflow they will actually keep using.',
     '',
+    '## \u26A1 Why This Matters',
+    '',
     `A longer feature list does not matter if the workflow already feels heavy by week two. In most cases, ${bestOverall.name} wins because it is the safest default. ${runnerUp.name} becomes more interesting if your main priority is ${runnerUp.bestFor}.`,
     '',
-    buildProsAndConsSection(entry),
+    buildQuickComparisonTable(entry).replace('## Quick Comparison Table', '## \u{1F4CA} Quick Comparison'),
     '',
-    buildRecommendationSection(entry),
+    buildBestOverallSection(entry).replace('## Best Overall', '## \u{1F3C6} Best Overall'),
     '',
-    '## Final Thoughts',
+    buildProsAndConsSection(entry).replace('## Pros and Cons', '## \u{1F6E0}\uFE0F Pros and Cons'),
+    '',
+    '## \u274C Common Mistakes When Choosing',
+    '',
+    '\u26A0\uFE0F Warning: Do not keep comparing tools instead of picking one and testing it. Momentum matters more than perfection.',
+    '',
+    '- Over-researching instead of testing',
+    '- Picking the most feature-rich option when you only need one feature',
+    '- Switching tools every week instead of committing for 2-3 weeks',
+    '',
+    buildRecommendationSection(entry).replace('## Final Recommendation', '## \u{1F3AF} Final Recommendation'),
+    '',
+    '## \u2753 FAQ',
+    '',
+    `**Which one should I start with?**`,
+    `Start with ${bestOverall.name} if you are not sure. It is the safest default for most people.`,
+    '',
+    `**Can I switch later?**`,
+    'Yes. Most tools let you export your data. But give any tool at least two weeks before judging it.',
+    '',
+    `**Do I need the paid plan?**`,
+    'Usually not to start. Free tiers are enough to test whether the workflow fits your habits.',
+    '',
+    '## \u{1F3AF} Conclusion',
     '',
     'A useful review should leave you with one confident next step. Pick the strongest fit, use it long enough to judge it fairly, and do not confuse more research with better progress.',
     '',
-    '## Call To Action',
-    '',
-    `What's making "${entry.reviewTitle}" harder than it should be right now?`,
+    `What\'s making "${entry.reviewTitle}" harder than it should be right now?`,
     '',
     'Choose the best-fit option, test it this week, and notice whether it reduces friction fast enough to keep.',
     '',
@@ -941,17 +989,30 @@ ${buildPromptProductList(entry)}
 GOAL:
 Help the reader choose the best product quickly, trust the recommendation, and take action.
 
-STRUCTURE:
+STRUCTURE (use EXACT section headings with emoji):
 
-- Sharp opening that names the reader's real confusion
-- Quick explanation of what actually matters
-- ## Quick Comparison Table
-- ## Best Overall (clear winner + why)
-- ## Pros and Cons (honest)
-- ## Who Each Product Is For
-- ## Final Recommendation
-- ## Final Thoughts
-- ## Call To Action
+1. Opening paragraph — names the reader's real confusion (no heading)
+2. ## \u{1F9E0} What to Look For
+3. ## \u26A1 Why This Matters
+4. ## \u{1F4CA} Quick Comparison (markdown table)
+5. ## \u{1F3C6} Best Overall (clear winner + why)
+6. ## \u{1F6E0}\uFE0F Pros and Cons (honest, per product)
+7. ## \u274C Common Mistakes When Choosing
+8. ## \u{1F30D} Real-World Use Case
+9. ## \u2753 FAQ (3-4 Q&A pairs, bold questions)
+10. ## \u{1F3AF} Final Recommendation
+
+EMOJI RULES:
+- Use EXACTLY the emoji shown above for each H2 heading
+- Max 1 emoji per H2 title (no emoji spam)
+- H3 subsections: clean text only, no emoji (e.g. ### Step 1 — Setup)
+- Same emoji always means the same category
+
+PARAGRAPH STYLE:
+- Start each paragraph with a strong, direct first sentence
+- Leave slight visual breaks between paragraph blocks
+- Use \u{1F449} Key Insight: for important callout lines
+- Use \u26A0\uFE0F Warning: for caution lines
 
 STYLE:
 
@@ -991,16 +1052,31 @@ Topic: ${topic}
 GOAL:
 Help the reader understand one real problem quickly, feel understood, and leave with one clear next step plus one recommended tool.
 
-STRUCTURE:
+STRUCTURE (use EXACT section headings with emoji):
 
-1. Strong opening that names the frustration or tension fast
-2. Why most people get stuck
-3. What actually works
-4. 3-5 practical takeaways or steps
-5. One simple real-life example or mini-scenario
-6. ## Recommended Tool
-7. ## Final Thoughts
-8. ## Call To Action
+1. Opening paragraph — strong first sentence, names the frustration fast (no heading)
+2. ## \u{1F9E0} What is ${topic}?
+3. ## \u26A1 Why It Matters
+4. ## \u{1F3D7}\uFE0F How It Works (architecture or breakdown)
+5. ## \u{1F6E0}\uFE0F Implementation
+   - Use H3 subsections: ### Step 1 — [action], ### Step 2 — [action], etc.
+6. ## \u{1F512} Best Practices (use \u{1F449} Key Insight: prefix for key lines)
+7. ## \u274C Common Mistakes (use \u26A0\uFE0F Warning: prefix for critical lines)
+8. ## \u{1F30D} Real-World Use Case (mini scenario)
+9. ## \u2753 FAQ (3-4 Q&A pairs, bold questions)
+10. ## \u{1F3AF} Conclusion
+
+EMOJI RULES:
+- Use EXACTLY the emoji shown above for each H2 heading
+- Max 1 emoji per H2 title (no emoji spam)
+- H3 subsections: clean text only, no emoji (e.g. ### Step 1 — Setup)
+- Same emoji always means the same category
+
+PARAGRAPH STYLE:
+- Start each paragraph with a strong, direct first sentence
+- Leave slight visual breaks between paragraph blocks
+- Use \u{1F449} Key Insight: for important callout lines
+- Use \u26A0\uFE0F Warning: for caution lines
 
 RULES:
 
@@ -1019,14 +1095,13 @@ RULES:
 
 CONVERSION RULES:
 
-- In "Recommended Tool":
-  - Introduce ONE tool naturally.
+- In the conclusion or body, naturally mention ONE recommended tool:
   - Explain WHY it helps in real life, not just features.
   - Keep it honest. No hype.
   - You MUST clearly recommend ONE best option and explain why it is the easiest or safest choice for most people.
   - Explain how the tool saves time, reduces effort, or removes confusion.
 
-- In CTA:
+- At the end:
   - Ask a direct question.
   - Encourage one small action.
   - Encourage sharing or saving.
@@ -1306,7 +1381,7 @@ function injectRelatedLinks(
     .join('\n');
 
   const relatedBlock = `## Related reading\n\n${links}`;
-  const trailingSectionMatch = content.match(/\n##\s+(Recommended Tool|Final Thoughts|Call To Action)\b/i);
+  const trailingSectionMatch = content.match(/\n##\s+(?:🎯\s+)?(?:Recommended Tool|Final Thoughts|Call To Action|Conclusion)\b/i);
 
   if (trailingSectionMatch?.index) {
     const insertionPoint = trailingSectionMatch.index + 1;
@@ -1610,8 +1685,8 @@ async function generatePost(topic: string, dryRun: boolean, existingPosts: Exist
     cleanContent(markdown, extractedTitle) ||
       cleanContent(buildFallbackMarkdown(topic, reviewMatch), title),
     reviewMatch
-      ? ['Quick Comparison Table', 'Best Overall', 'Pros and Cons', 'Final Recommendation', 'Final Thoughts', 'Call To Action']
-      : ['Recommended Tool', 'Final Thoughts', 'Call To Action']
+      ? ['\u{1F4CA} Quick Comparison', '\u{1F3C6} Best Overall', '\u{1F6E0}\uFE0F Pros and Cons', '\u{1F3AF} Final Recommendation', '\u{1F3AF} Conclusion']
+      : ['\u{1F3AF} Conclusion']
   );
 
   let cleanedContent = reviewMatch

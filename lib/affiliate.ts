@@ -75,7 +75,7 @@ function escapeRegExp(value: string): string {
 }
 
 function insertBeforeTrailingSections(content: string, block: string): string {
-  const trailingSectionMatch = content.match(/\n##\s+(Final Thoughts|Call To Action)\b/i);
+  const trailingSectionMatch = content.match(/\n##\s+(?:🎯\s+)?(?:Final Thoughts|Call To Action|Conclusion)\b/i);
 
   if (trailingSectionMatch?.index) {
     const insertionPoint = trailingSectionMatch.index + 1;
@@ -196,7 +196,7 @@ function injectContextualLinks(
     return { content, usedKeys, insertedCount };
   }
 
-  const trailingSectionMatch = content.match(/\n##\s+(Recommended Tool|Final Thoughts|Call To Action|Related reading)\b/i);
+  const trailingSectionMatch = content.match(/\n##\s+(?:🎯\s+)?(?:Recommended Tool|Final Thoughts|Call To Action|Conclusion|Related reading)\b/i);
   const mainBody = trailingSectionMatch?.index
     ? content.slice(0, trailingSectionMatch.index + 1).trimEnd()
     : content;
