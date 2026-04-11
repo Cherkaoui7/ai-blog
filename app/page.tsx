@@ -111,42 +111,47 @@ export default async function HomePage() {
         </p>
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
-          gap: '1rem',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+          gap: '1.5rem',
         }}>
           {authors.map(author => (
             <div key={author.name} style={{
               background: 'var(--surface)',
               border: '1px solid var(--border)',
-              borderRadius: 14,
-              padding: '1.5rem',
+              borderRadius: 16,
+              padding: '2.5rem 1.75rem',
               textAlign: 'center',
-              transition: 'border-color 0.2s ease',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              transition: 'border-color 0.2s ease, transform 0.2s ease',
             }}>
               <div style={{
-                width: 64, height: 64, borderRadius: '50%', margin: '0 auto 0.75rem',
+                width: 72, height: 72, borderRadius: '50%', margin: '0 auto 1.25rem',
                 background: 'var(--accent-subtle, #1e1835)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 22, fontWeight: 700, color: 'var(--accent)',
+                fontSize: 24, fontWeight: 700, color: 'var(--accent)',
+                letterSpacing: '0.02em',
               }}>
-                {author.name.split(' ').map(n => n[0]).join('')}
+                {author.name.replace('Dr. ', 'D').split(' ').map(n => n[0]).join('').substring(0, 3)}
               </div>
-              <h3 style={{ fontWeight: 600, fontSize: '1rem', marginBottom: 4, color: 'var(--text)' }}>
+              <h3 style={{ fontWeight: 600, fontSize: '1.125rem', marginBottom: 8, color: 'var(--text)' }}>
                 {author.name}
               </h3>
               <p style={{
-                fontSize: '0.75rem',
+                fontSize: '0.8125rem',
                 color: 'var(--accent)',
                 fontWeight: 600,
-                marginBottom: '0.5rem',
+                marginBottom: '1.25rem',
                 letterSpacing: '0.01em',
+                lineHeight: 1.5,
               }}>
                 {author.title}
               </p>
               <p style={{
-                fontSize: '0.8125rem',
+                fontSize: '0.875rem',
                 color: 'var(--text-secondary, #a1a1aa)',
-                lineHeight: 1.5,
+                lineHeight: 1.7,
               }}>
                 {author.bio}
               </p>
